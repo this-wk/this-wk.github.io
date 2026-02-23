@@ -87,7 +87,7 @@
 
 
 <nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
   </ul>
 </nav>
 
@@ -176,7 +176,75 @@
 
       
       
-      <div class="post-body"><div class="tag-cloud">
+      <div class="post-body">
+<style>
+.taxonomy-tabs {
+  display: flex;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+}
+.taxonomy-tab {
+  padding: 10px 24px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #999;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.3s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.taxonomy-tab:hover {
+  color: #333;
+}
+.taxonomy-tab.active {
+  color: #333;
+  border-bottom-color: #333;
+}
+.taxonomy-panel {
+  display: none;
+}
+.taxonomy-panel.active {
+  display: block;
+}
+.injected-category-all .category-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+.injected-category-all .category-list-item {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+}
+.injected-category-all .category-list-link {
+  color: #555;
+  font-size: 15px;
+}
+.injected-category-all .category-list-link:hover {
+  color: #0275d8;
+}
+.injected-category-all .category-list-count {
+  color: #999;
+  font-size: 13px;
+  margin-left: 6px;
+}
+.injected-category-all .category-list-count::before {
+  content: "(";
+}
+.injected-category-all .category-list-count::after {
+  content: ")";
+}
+</style>
+
+<div class="taxonomy-tabs">
+  <button class="taxonomy-tab active" onclick="switchTab('tags')">标签</button>
+  <button class="taxonomy-tab" onclick="switchTab('categories')">分类</button>
+</div>
+<div id="taxonomy-tags" class="taxonomy-panel active">
+  <div class="tag-cloud">
   <div class="tag-cloud-title">
     目前共计 11 个标签
   </div>
@@ -186,6 +254,29 @@
 </div>
 
       </div>
+</div>
+<div id="taxonomy-categories" class="taxonomy-panel">
+  <div class="injected-category-all">
+    <div class="category-all-title">共计 1 个分类</div>
+    <div class="category-all">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/技术教程/">技术教程</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+</div>
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.taxonomy-tab').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.taxonomy-panel').forEach(function(el) { el.classList.remove('active'); });
+  if (tab === 'tags') {
+    document.querySelectorAll('.taxonomy-tab')[0].classList.add('active');
+    document.getElementById('taxonomy-tags').classList.add('active');
+  } else {
+    document.querySelectorAll('.taxonomy-tab')[1].classList.add('active');
+    document.getElementById('taxonomy-categories').classList.add('active');
+  }
+}
+</script>
+
       
       
       
