@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="约束：C++11 标准、Linux 服务器；晚间学习时间：2h&#x2F;天（每周 5 天 ≈ 10h）。主线：并发正确性 → 并发工程化（诊断&#x2F;性能&#x2F;可观测）→ 网络（Boost.Asio）落地。贯穿：STL（复杂度、失效规则、分配、算法）每周必练。参考书籍：  《C++ Concurrency in Action》(C++并发编程实战) 第2版（强烈推荐第2版，代码质量和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战专栏：12周学习计划">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/plan-12w/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="约束：C++11 标准、Linux 服务器；晚间学习时间：2h&#x2F;天（每周 5 天 ≈ 10h）。主线：并发正确性 → 并发工程化（诊断&#x2F;性能&#x2F;可观测）→ 网络（Boost.Asio）落地。贯穿：STL（复杂度、失效规则、分配、算法）每周必练。参考书籍：  《C++ Concurrency in Action》(C++并发编程实战) 第2版（强烈推荐第2版，代码质量和">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:18:43.866Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/plan-12w/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/plan-12w/","path":"2026/03/05/cpp11-series/plan-12w/","title":"C++11 进阶实战专栏：12周学习计划"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战专栏：12周学习计划 | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%93%85-%E6%AF%8F%E6%97%A5%E5%AD%A6%E4%B9%A0%E4%B8%8E%E5%AE%9E%E6%93%8D%E8%AE%A1%E5%88%92-Day-1-Day-5"><span class="nav-number">1.</span> <span class="nav-text">📅 每日学习与实操计划 (Day 1 - Day 5)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-0%EF%BC%9A%E8%AE%AD%E7%BB%83%E5%9C%BA%E6%90%AD%E5%BB%BA%EF%BC%88%E5%88%AB%E8%B7%B3%E8%BF%87%EF%BC%8C%E7%A3%A8%E5%88%80%E4%B8%8D%E8%AF%AF%E7%A0%8D%E6%9F%B4%E5%B7%A5%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">Week 0：训练场搭建（别跳过，磨刀不误砍柴工）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-1%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%9C%B0%E5%9F%BA-STL-%E5%A4%B1%E6%95%88%E8%A7%84%E5%88%99"><span class="nav-number">1.2.</span> <span class="nav-text">Week 1：并发地基 + STL 失效规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-2%EF%BC%9A%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-BlockingQueue-%E7%BB%84%E4%BB%B6-1"><span class="nav-number">1.3.</span> <span class="nav-text">Week 2：条件变量 + BlockingQueue (组件 1)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-3%EF%BC%9Afuture-%E4%B8%8E-Lambda-%E5%BC%82%E6%AD%A5%E8%8E%B7%E5%8F%96%E7%BB%93%E6%9E%9C"><span class="nav-number">1.4.</span> <span class="nav-text">Week 3：future 与 Lambda (异步获取结果)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-4%EF%BC%9A%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E4%B8%8E%E5%B9%B6%E5%8F%91%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F-%E6%97%A5%E5%BF%97%E8%B5%B7%E6%AD%A5"><span class="nav-number">1.5.</span> <span class="nav-text">Week 4：智能指针与并发生命周期 + 日志起步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-5%EF%BC%9A%E7%BA%BF%E7%A8%8B%E6%B1%A0-v1-%E7%BB%84%E4%BB%B6-2"><span class="nav-number">1.6.</span> <span class="nav-text">Week 5：线程池 v1 (组件 2)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-6%EF%BC%9A%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E4%B8%8E%E9%94%81%E7%9A%84%E8%BF%9B%E9%98%B6-%E5%BA%95%E5%B1%82%E5%B9%B6%E5%8F%91"><span class="nav-number">1.7.</span> <span class="nav-text">Week 6：原子操作与锁的进阶 (底层并发)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-7%EF%BC%9A%E6%80%A7%E8%83%BD%E8%AF%8A%E6%96%AD%E4%B8%8E%E8%B0%83%E4%BC%98%E5%91%A8-perf-%E9%97%AD%E7%8E%AF"><span class="nav-number">1.8.</span> <span class="nav-text">Week 7：性能诊断与调优周 (perf 闭环)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-8%EF%BC%9A%E7%BD%91%E7%BB%9C%E5%85%A5%E9%97%A8-Boost-Asio-%E5%9F%BA%E7%A1%80%E6%80%9D%E7%BB%B4%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.9.</span> <span class="nav-text">Week 8：网络入门 (Boost.Asio 基础思维模型)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-9%EF%BC%9A%E5%BC%82%E6%AD%A5-TCP-Echo-Server"><span class="nav-number">1.10.</span> <span class="nav-text">Week 9：异步 TCP Echo Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-10%EF%BC%9A%E5%B9%B6%E5%8F%91-%E7%BD%91%E7%BB%9C%E5%A4%A7%E4%B8%80%E7%BB%9F-Asio-%E7%BB%93%E5%90%88-ThreadPool"><span class="nav-number">1.11.</span> <span class="nav-text">Week 10：并发 + 网络大一统 (Asio 结合 ThreadPool)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-11%EF%BC%9ASTL-%E5%BC%BA%E5%8C%96%E4%B8%8E%E7%8E%B0%E4%BB%A3-C-%E8%A1%A5%E6%BC%8F"><span class="nav-number">1.12.</span> <span class="nav-text">Week 11：STL 强化与现代 C++ 补漏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Week-12%EF%BC%9A%E7%BB%BC%E5%90%88%E5%AE%9E%E6%88%98%E7%BB%93%E4%B8%9A-%E5%8F%AF%E8%A7%82%E6%B5%8B%E7%9A%84%E5%BC%82%E6%AD%A5-KV-Server"><span class="nav-number">1.13.</span> <span class="nav-text">Week 12：综合实战结业 (可观测的异步 KV Server)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%A1-%E6%88%90%E5%8A%9F%E6%8C%87%E6%A0%87%E4%B8%8E%E8%87%AA%E6%A3%80-%E6%AF%8F%E5%91%A8%E6%9C%AB%E5%AF%B9%E7%85%A7"><span class="nav-number">2.</span> <span class="nav-text">💡 成功指标与自检 (每周末对照)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">2.1.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/plan-12w/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战专栏：12周学习计划 | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战专栏：12周学习计划
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:00:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:00:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p><strong>约束</strong>：C++11 标准、Linux 服务器；晚间学习时间：2h&#x2F;天（每周 5 天 ≈ 10h）。<br><strong>主线</strong>：并发正确性 → 并发工程化（诊断&#x2F;性能&#x2F;可观测）→ 网络（Boost.Asio）落地。<br><strong>贯穿</strong>：STL（复杂度、失效规则、分配、算法）每周必练。<br><strong>参考书籍</strong>：</p>
+<ol>
+<li>《C++ Concurrency in Action》(C++并发编程实战) 第2版（强烈推荐第2版，代码质量和翻译更好，专注于其中C++11相关的核心章节）</li>
+<li>《Effective Modern C++》(Scott Meyers)（专注于C++11&#x2F;14的最佳实践）</li>
+<li><code>cppreference.com</code>（最权威的在线字典）</li>
+<li>Boost.Asio 官方文档及 Tutorials</li>
+</ol>
+</blockquote>
+<hr>
+<h2 id="📅-每日学习与实操计划-Day-1-Day-5"><a href="#📅-每日学习与实操计划-Day-1-Day-5" class="headerlink" title="📅 每日学习与实操计划 (Day 1 - Day 5)"></a>📅 每日学习与实操计划 (Day 1 - Day 5)</h2><p>建议的每日 2 小时节奏：<strong>30分钟阅读输入</strong> + <strong>70分钟编码实践</strong> + <strong>20分钟复盘与笔记</strong>。</p>
+<h3 id="Week-0：训练场搭建（别跳过，磨刀不误砍柴工）"><a href="#Week-0：训练场搭建（别跳过，磨刀不误砍柴工）" class="headerlink" title="Week 0：训练场搭建（别跳过，磨刀不误砍柴工）"></a>Week 0：训练场搭建（别跳过，磨刀不误砍柴工）</h3><ul>
+<li><strong>Day 1: 编译体系搭建</strong><ul>
+<li><strong>阅读</strong>: CMake 基础语法教程。</li>
+<li><strong>实操</strong>: 在 Linux 上搭建基础环境 (GCC&#x2F;Clang, CMake, GDB)，编写 <code>CMakeLists.txt</code> 模板，强制开启 C++11 标准 (<code>set(CMAKE_CXX_STANDARD 11)</code>) 和严格警告 (<code>-Wall -Wextra -Werror</code>)。</li>
+</ul>
+</li>
+<li><strong>Day 2: 内存与并发诊断工具接入</strong><ul>
+<li><strong>阅读</strong>: AddressSanitizer (ASan) 和 ThreadSanitizer (TSan) 官方文档。</li>
+<li><strong>实操</strong>: 在 CMake 中配置开启 ASan&#x2F;TSan 的编译选项。写一个简单的越界 Bug 或数据竞争，编译并用 ASan&#x2F;TSan 跑出堆栈报告。</li>
+</ul>
+</li>
+<li><strong>Day 3: 性能剖析工具起步</strong><ul>
+<li><strong>阅读</strong>: <code>perf</code> 工具的基础用法 (<code>perf record</code>, <code>perf report</code>)。</li>
+<li><strong>实操</strong>: 写一个死循环或高频分配的 CPU 热点代码，用 <code>perf</code> 定位到具体函数。</li>
+</ul>
+</li>
+<li><strong>Day 4: 测试框架接入</strong><ul>
+<li><strong>阅读</strong>: GoogleTest 或 Catch2 的 Quick Start。</li>
+<li><strong>实操</strong>: 引入 GTest，写一个简单的加法函数，完成并跑通单元测试。</li>
+</ul>
+</li>
+<li><strong>Day 5: 基础语法避坑与总结</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 7 (大括号初始化) &amp; Item 8 (nullptr vs NULL)。</li>
+<li><strong>实操</strong>: 整理 <code>week00.md</code>，提交第一版工程脚手架到 Git。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-1：并发地基-STL-失效规则"><a href="#Week-1：并发地基-STL-失效规则" class="headerlink" title="Week 1：并发地基 + STL 失效规则"></a>Week 1：并发地基 + STL 失效规则</h3><ul>
+<li><strong>Day 1: 互斥锁与数据保护</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 3.1 &amp; 3.2 (<code>mutex</code>, <code>lock_guard</code>)。</li>
+<li><strong>实操</strong>: 用 <code>std::mutex</code> 和 <code>std::lock_guard</code> 写一个多线程安全的全局计数器 (Counter)。</li>
+</ul>
+</li>
+<li><strong>Day 2: 死锁规避</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 3.2.4 (死锁规避) &amp; 3.3 (<code>unique_lock</code>)。</li>
+<li><strong>实操</strong>: 模拟经典的“银行账户互相转账”死锁场景，并用 <code>std::lock</code> 修复该死锁。</li>
+</ul>
+</li>
+<li><strong>Day 3: 顺序容器迭代器失效</strong><ul>
+<li><strong>阅读</strong>: cppreference 查阅 <code>std::vector</code> 和 <code>std::string</code>。</li>
+<li><strong>实操</strong>: 总结 vector 扩容带来的引用失效问题。写代码触发 vector 扩容导致的迭代器失效崩溃 (Segfault)。</li>
+</ul>
+</li>
+<li><strong>Day 4: 关联容器与并发安全读写</strong><ul>
+<li><strong>阅读</strong>: cppreference 查阅 <code>std::map</code> &#x2F; <code>std::list</code> &#x2F; <code>std::deque</code> 的失效规则。</li>
+<li><strong>实操</strong>: 多线程下使用 <code>std::mutex</code> 保护一个 <code>std::map</code> 的读写（理解读写并发时的内存问题）。</li>
+</ul>
+</li>
+<li><strong>Day 5: 验收与复盘</strong><ul>
+<li><strong>实操</strong>: 用 TSan 跑一边本周代码确保无数据竞争。整理一张 STL 失效规则速查表至 <code>week01.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-2：条件变量-BlockingQueue-组件-1"><a href="#Week-2：条件变量-BlockingQueue-组件-1" class="headerlink" title="Week 2：条件变量 + BlockingQueue (组件 1)"></a>Week 2：条件变量 + BlockingQueue (组件 1)</h3><ul>
+<li><strong>Day 1: 条件变量与虚假唤醒</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 4.1 (<code>condition_variable</code>)。理解 wait 的谓词与虚假唤醒(Spurious Wakeup)。</li>
+<li><strong>实操</strong>: 写一个小 demo，一个线程 wait，另一个线程 notify_one。</li>
+</ul>
+</li>
+<li><strong>Day 2: 无界阻塞队列</strong><ul>
+<li><strong>阅读</strong>: 复习 <code>std::queue</code>。</li>
+<li><strong>实操</strong>: 基于 <code>mutex</code> 和 <code>condition_variable</code> 实现线程安全的无界 <code>BlockingQueue&lt;T&gt;</code> (支持 push 和 take)。</li>
+</ul>
+</li>
+<li><strong>Day 3: 有界阻塞队列 (BoundedBlockingQueue)</strong><ul>
+<li><strong>阅读</strong>: 生产者-消费者模型理论。</li>
+<li><strong>实操</strong>: 将队列升级为有界，支持满载等待 (not_full) 和空载等待 (not_empty)。</li>
+</ul>
+</li>
+<li><strong>Day 4: 底层容器优化</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 42 (emplace vs push) &amp; cppreference <code>std::vector::reserve</code>。</li>
+<li><strong>实操</strong>: 检查并优化 Queue 的内部元素拷贝开销，改用 <code>std::move</code> 或 <code>emplace</code>。</li>
+</ul>
+</li>
+<li><strong>Day 5: 验收与复盘</strong><ul>
+<li><strong>实操</strong>: 为 <code>BlockingQueue</code> 编写多生产者-多消费者并发单测。用 TSan 验证。完成 <code>week02.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-3：future-与-Lambda-异步获取结果"><a href="#Week-3：future-与-Lambda-异步获取结果" class="headerlink" title="Week 3：future 与 Lambda (异步获取结果)"></a>Week 3：future 与 Lambda (异步获取结果)</h3><ul>
+<li><strong>Day 1: 异步期望 (future&#x2F;promise)</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 4.2.1-4.2.3 (<code>future</code>, <code>promise</code>)。</li>
+<li><strong>实操</strong>: 写一个 <code>promise</code> 在后台线程计算，主线程通过 <code>future::get()</code> 等待结果的 Demo。</li>
+</ul>
+</li>
+<li><strong>Day 2: 任务打包 (packaged_task)</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 4.2.4 (<code>packaged_task</code>)。</li>
+<li><strong>实操</strong>: 封装一个耗时函数，通过 <code>packaged_task</code> 抛到新线程，并获取其返回值。</li>
+</ul>
+</li>
+<li><strong>Day 3: Lambda 与可调用对象</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 31 &amp; 32 (Lambda 捕获陷阱，C++11 没有 init-capture 的替代方案)。</li>
+<li><strong>实操</strong>: 用 Lambda 表达式重写前面几天所有的线程执行体，体会闭包捕获生命周期的问题。</li>
+</ul>
+</li>
+<li><strong>Day 4: 函数对象包装</strong><ul>
+<li><strong>阅读</strong>: cppreference <code>std::function</code> &amp; <code>std::bind</code>。</li>
+<li><strong>实操</strong>: 实现一个通用的 <code>submit()-&gt;future</code> 异步执行包裹函数 (每次调用都新建线程执行)。</li>
+</ul>
+</li>
+<li><strong>Day 5: 异常传播与验收</strong><ul>
+<li><strong>实操</strong>: 测试后台线程抛出异常，在 <code>future::get()</code> 时捕获 <code>std::future_error</code> &#x2F; <code>std::exception</code>。整理 <code>week03.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-4：智能指针与并发生命周期-日志起步"><a href="#Week-4：智能指针与并发生命周期-日志起步" class="headerlink" title="Week 4：智能指针与并发生命周期 + 日志起步"></a>Week 4：智能指针与并发生命周期 + 日志起步</h3><ul>
+<li><strong>Day 1: 独占智能指针</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 18 &amp; 19 (<code>unique_ptr</code>, <code>shared_ptr</code> 控制块原理)。</li>
+<li><strong>实操</strong>: 了解 <code>shared_ptr</code> 的引用计数是原子的，但对其内部数据的读写<strong>不是</strong>线程安全的。</li>
+</ul>
+</li>
+<li><strong>Day 2: 共享智能指针与弱引用</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 20 &amp; 21 (<code>weak_ptr</code>, <code>make_shared</code>)。</li>
+<li><strong>实操</strong>: 多线程下用 <code>shared_ptr</code> 共享数据，避免由于对象提前析构引发的数据竞争。</li>
+</ul>
+</li>
+<li><strong>Day 3: 引入格式化库</strong><ul>
+<li><strong>阅读</strong>: <code>fmt</code> 库官方文档 (为后续日志系统打基础)。</li>
+<li><strong>实操</strong>: 在 CMake 中接入 <code>fmt</code> (作为 vendor 或 git submodule)，使用 <code>fmt::print</code> 替换掉存在并发输出乱序问题的 <code>std::cout</code>。</li>
+</ul>
+</li>
+<li><strong>Day 4: 并发 Cache (结合智能指针)</strong><ul>
+<li><strong>实操</strong>: 实现一个支持并发访问的简单 Cache。用 <code>std::shared_ptr</code> 管理缓存的 Value，用 <code>std::weak_ptr</code> 解决生命周期探测或避免循环引用。</li>
+</ul>
+</li>
+<li><strong>Day 5: 验收与复盘</strong><ul>
+<li><strong>实操</strong>: TSan 跑并发 Cache 单测。完成 <code>week04.md</code> 复盘。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-5：线程池-v1-组件-2"><a href="#Week-5：线程池-v1-组件-2" class="headerlink" title="Week 5：线程池 v1 (组件 2)"></a>Week 5：线程池 v1 (组件 2)</h3><ul>
+<li><strong>Day 1: 线程池数据结构设计</strong><ul>
+<li><strong>实操</strong>: 设计核心结构：<code>vector&lt;thread&gt;</code> workers + Week 2 写的 <code>BlockingQueue&lt;Task&gt;</code>。定义 Task 类型（利用 <code>std::function&lt;void()&gt;</code>）。</li>
+</ul>
+</li>
+<li><strong>Day 2: 启动与优雅关闭</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 8.1 线程池基础设计。</li>
+<li><strong>实操</strong>: 实现 <code>ThreadPool::start</code> 和 <code>ThreadPool::stop</code>。深入理解 join()、detach() 以及如何用条件变量通知所有 worker 安全退出。</li>
+</ul>
+</li>
+<li><strong>Day 3: 结合 future 提交任务</strong><ul>
+<li><strong>实操</strong>: 结合 Week 3 的知识，实现完整的 <code>template&lt;class F, class... Args&gt; auto submit(F&amp;&amp; f, Args&amp;&amp;... args) -&gt; std::future&lt;...&gt;</code> 接口。</li>
+</ul>
+</li>
+<li><strong>Day 4: 日志库接入与埋点</strong><ul>
+<li><strong>阅读</strong>: <code>spdlog</code> 官方文档。</li>
+<li><strong>实操</strong>: 在工程中接入 <code>spdlog</code>。在线程池的关键节点（启动、接收任务、执行结束、销毁）打上 INFO&#x2F;DEBUG 日志。</li>
+</ul>
+</li>
+<li><strong>Day 5: 压测与验收</strong><ul>
+<li><strong>实操</strong>: 编写压测代码，向线程池狂暴提交 10 万个任务，观察系统资源使用。整理 <code>week05.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-6：原子操作与锁的进阶-底层并发"><a href="#Week-6：原子操作与锁的进阶-底层并发" class="headerlink" title="Week 6：原子操作与锁的进阶 (底层并发)"></a>Week 6：原子操作与锁的进阶 (底层并发)</h3><ul>
+<li><strong>Day 1: std::atomic 基础</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 5.1 &amp; 5.2。</li>
+<li><strong>实操</strong>: 用 <code>std::atomic&lt;int&gt;</code> 写一个无锁计数器，替换 Week 1 的互斥锁计数器。</li>
+</ul>
+</li>
+<li><strong>Day 2: 内存模型初步</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 5.3 (memory_order_relaxed &#x2F; seq_cst)。</li>
+<li><strong>实操</strong>: 在 Godbolt(Compiler Explorer) 上对比不同 memory order 编译出来的汇编指令差异。</li>
+</ul>
+</li>
+<li><strong>Day 3: Acquire-Release 语义与自旋锁</strong><ul>
+<li><strong>阅读</strong>: 《C++ Concurrency in Action》Chapter 5.3 (acquire-release)。</li>
+<li><strong>实操</strong>: 基于 <code>std::atomic_flag</code> 或 <code>atomic&lt;bool&gt;</code> 实现一个一写一读的自旋锁 (SpinLock)。</li>
+</ul>
+</li>
+<li><strong>Day 4: 并发哈希表的设计权衡</strong><ul>
+<li><strong>阅读</strong>: cppreference <code>std::unordered_map</code> (哈希碰撞、rehash)。</li>
+<li><strong>实操</strong>: 探究为什么 STL 不提供线程安全的容器。尝试用分段锁 (Striped Locks) 的思想封装一个简单的并发 Map。</li>
+</ul>
+</li>
+<li><strong>Day 5: 性能对比与验收</strong><ul>
+<li><strong>实操</strong>: 编写基准测试，对比在不同冲突率下 <code>std::mutex</code> 和 自旋锁 的吞吐量差异。整理 <code>week06.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-7：性能诊断与调优周-perf-闭环"><a href="#Week-7：性能诊断与调优周-perf-闭环" class="headerlink" title="Week 7：性能诊断与调优周 (perf 闭环)"></a>Week 7：性能诊断与调优周 (perf 闭环)</h3><ul>
+<li><strong>Day 1: 制造性能瓶颈并采样</strong><ul>
+<li><strong>实操</strong>: 故意在代码里造一个瓶颈（例如 <code>std::string</code> 在循环中被按值传递并产生大量小内存分配）。使用 <code>perf record -g</code> 抓取数据。</li>
+</ul>
+</li>
+<li><strong>Day 2: 分析热点 (FlameGraph)</strong><ul>
+<li><strong>阅读</strong>: 学习生成火焰图 (FlameGraph) 或使用 <code>perf report</code> 树状视图。</li>
+<li><strong>实操</strong>: 定位到第一天代码中的热点函数（通常会看到 <code>malloc/free</code> 占据高比例）。</li>
+</ul>
+</li>
+<li><strong>Day 3: 消除冗余拷贝</strong><ul>
+<li><strong>实操</strong>: 将传值改为 <code>const std::string&amp;</code>，或者避免无意义的中间字符串生成。对比优化前后的延迟。</li>
+</ul>
+</li>
+<li><strong>Day 4: 内存对齐与伪共享 (False Sharing)</strong><ul>
+<li><strong>阅读</strong>: 了解 CPU Cache Line 以及并发下著名的性能杀手：伪共享。</li>
+<li><strong>实操</strong>: 写一个导致伪共享的并发代码并用 perf 观察。用 <code>alignas(64)</code> 修复它，观察性能飙升。</li>
+</ul>
+</li>
+<li><strong>Day 5: 性能报告与验收</strong><ul>
+<li><strong>实操</strong>: 梳理从“发现问题 -&gt; 工具佐证 -&gt; 优化修改 -&gt; 结果对比”的完整链路。输出报告，整理 <code>week07.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-8：网络入门-Boost-Asio-基础思维模型"><a href="#Week-8：网络入门-Boost-Asio-基础思维模型" class="headerlink" title="Week 8：网络入门 (Boost.Asio 基础思维模型)"></a>Week 8：网络入门 (Boost.Asio 基础思维模型)</h3><ul>
+<li><strong>Day 1: io_context 与事件循环</strong><ul>
+<li><strong>阅读</strong>: Boost.Asio 官方 Tutorial (Timer1-Timer5)。</li>
+<li><strong>实操</strong>: 跑通最基础的同步与异步定时器，理解 <code>io_context::run()</code> 的阻塞机制。</li>
+</ul>
+</li>
+<li><strong>Day 2: 异步回调与生命周期</strong><ul>
+<li><strong>阅读</strong>: Asio Proactor 模式。</li>
+<li><strong>实操</strong>: 使用 <code>std::bind</code> 或 Lambda 注册 Handler。理解如果对象被销毁但 Handler 被触发会导致什么崩溃。</li>
+</ul>
+</li>
+<li><strong>Day 3: TCP 基础：Acceptor 与 Socket</strong><ul>
+<li><strong>阅读</strong>: Asio Echo Server 示例。</li>
+<li><strong>实操</strong>: 实现一个同步阻塞版本的 Echo Server，每次连接新建一个线程。</li>
+</ul>
+</li>
+<li><strong>Day 4: 缓冲区与内存管理</strong><ul>
+<li><strong>阅读</strong>: <code>asio::buffer</code> 原理。</li>
+<li><strong>实操</strong>: 熟悉 Asio 的读写 Buffer，理解如何在网络收发时避免额外的 payload 拷贝。</li>
+</ul>
+</li>
+<li><strong>Day 5: 模型总结与验收</strong><ul>
+<li><strong>实操</strong>: 总结 Asio 的对象生命周期与并发模型（单线程 EventLoop 模式）。整理 <code>week08.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-9：异步-TCP-Echo-Server"><a href="#Week-9：异步-TCP-Echo-Server" class="headerlink" title="Week 9：异步 TCP Echo Server"></a>Week 9：异步 TCP Echo Server</h3><ul>
+<li><strong>Day 1: 异步接受连接 (async_accept)</strong><ul>
+<li><strong>实操</strong>: 将同步 Server 改造为异步，循环投递 <code>async_accept</code> 事件。</li>
+</ul>
+</li>
+<li><strong>Day 2: 异步读写与 Connection 生命周期</strong><ul>
+<li><strong>实操</strong>: 实现 <code>async_read_some</code> 和 <code>async_write</code>。使用 <code>std::enable_shared_from_this</code> 保证在还有回调未执行时，Connection 对象不被析构。</li>
+</ul>
+</li>
+<li><strong>Day 3: 注入日志上下文</strong><ul>
+<li><strong>实操</strong>: 为每个 Connection 生成唯一 ID。结合 <code>spdlog</code> 打印连接的远端 IP、端口、收发字节数、耗时等。</li>
+</ul>
+</li>
+<li><strong>Day 4: 优雅关闭与资源清理</strong><ul>
+<li><strong>阅读</strong>: TCP 的 shutdown 与 close 边界。</li>
+<li><strong>实操</strong>: 处理客户端断开 (EOF&#x2F;Reset)，正确调用 <code>socket.shutdown()</code> 和 <code>socket.close()</code>，确保无内存泄漏（用 ASan 检查）。</li>
+</ul>
+</li>
+<li><strong>Day 5: 压测与验收</strong><ul>
+<li><strong>实操</strong>: 编写一个简单的 Client，建立 1000 个并发连接并发送报文，验证 Server 不会崩溃。整理 <code>week09.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-10：并发-网络大一统-Asio-结合-ThreadPool"><a href="#Week-10：并发-网络大一统-Asio-结合-ThreadPool" class="headerlink" title="Week 10：并发 + 网络大一统 (Asio 结合 ThreadPool)"></a>Week 10：并发 + 网络大一统 (Asio 结合 ThreadPool)</h3><ul>
+<li><strong>Day 1: Asio 多线程模型探索</strong><ul>
+<li><strong>阅读</strong>: 官方关于多个线程跑同一个 <code>io_context::run</code> 的说明及 <code>strand</code> 机制。</li>
+<li><strong>实操</strong>: 验证 Asio 内置的多线程事件派发逻辑。</li>
+</ul>
+</li>
+<li><strong>Day 2: 架构分离：网络 IO 与 业务计算</strong><ul>
+<li><strong>实操</strong>: 策略演进：<code>io_context</code>（单线程&#x2F;多线程）专职做网络 IO；收到数据包后，不阻塞 IO 线程，而是将其打包成 Task 丢入 Week 5 写的 <code>ThreadPool</code>。</li>
+</ul>
+</li>
+<li><strong>Day 3: 异步回包与线程安全</strong><ul>
+<li><strong>阅读</strong>: <code>asio::post</code>。</li>
+<li><strong>实操</strong>: 业务线程池处理完数据后，绝对<strong>不能</strong>直接在业务线程调用 <code>socket.write</code>（非线程安全），必须通过 <code>asio::post</code> 投递回 IO 线程去执行 <code>async_write</code>。</li>
+</ul>
+</li>
+<li><strong>Day 4: 背压控制 (Backpressure) 起步</strong><ul>
+<li><strong>实操</strong>: 当 ThreadPool 的任务队列满载时，网络层该怎么做？实现简单的熔断机制（暂停 <code>async_read</code> 或是直接丢弃并打 Warn 日志）。</li>
+</ul>
+</li>
+<li><strong>Day 5: 链路验证与验收</strong><ul>
+<li><strong>实操</strong>: 用 TSan 跑通“网络层接收 -&gt; 业务线程池处理 -&gt; 跨线程回包”的完整链路，确保无数据竞争。整理 <code>week10.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-11：STL-强化与现代-C-补漏"><a href="#Week-11：STL-强化与现代-C-补漏" class="headerlink" title="Week 11：STL 强化与现代 C++ 补漏"></a>Week 11：STL 强化与现代 C++ 补漏</h3><ul>
+<li><strong>Day 1: 自动类型推导与关键字</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 1-4 (<code>auto</code>, <code>decltype</code>)。</li>
+<li><strong>实操</strong>: 复盘历史代码，清理冗长的迭代器类型，警惕 <code>auto</code> 推导引用丢失的坑。</li>
+</ul>
+</li>
+<li><strong>Day 2: 特殊成员函数与移动语义</strong><ul>
+<li><strong>阅读</strong>: 《Effective Modern C++》Item 13-17 (<code>override</code>, <code>noexcept</code>, <code>const</code>) &amp; Item 23-25 (<code>std::move</code>, <code>std::forward</code>)。</li>
+<li><strong>实操</strong>: 为 ThreadPool 和 Connection 的关键类补充 <code>noexcept</code> 和 <code>const</code>。检查并替换不必要的深拷贝为 <code>std::move</code>。</li>
+</ul>
+</li>
+<li><strong>Day 3: STL 算法化简代码</strong><ul>
+<li><strong>阅读</strong>: cppreference 查阅 <code>std::transform</code>, <code>std::accumulate</code>, <code>std::remove_if</code>。</li>
+<li><strong>实操</strong>: 重构以前写过的原始 <code>for</code> 循环，用高阶算法替代。</li>
+</ul>
+</li>
+<li><strong>Day 4: 自定义哈希与比较器</strong><ul>
+<li><strong>实操</strong>: 尝试将一个自定义的 Struct 存入 <code>std::unordered_map</code> 或 <code>std::set</code> 中，自行编写 <code>hash</code> 函数和 <code>operator==</code>。</li>
+</ul>
+</li>
+<li><strong>Day 5: 经验内化与复盘</strong><ul>
+<li><strong>实操</strong>: 总结工作或前 10 周遇到的 2 个真实的 STL 性能&#x2F;逻辑坑。整理 <code>week11.md</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Week-12：综合实战结业-可观测的异步-KV-Server"><a href="#Week-12：综合实战结业-可观测的异步-KV-Server" class="headerlink" title="Week 12：综合实战结业 (可观测的异步 KV Server)"></a>Week 12：综合实战结业 (可观测的异步 KV Server)</h3><ul>
+<li><strong>Day 1: 系统集成与命令设计</strong><ul>
+<li><strong>实操</strong>: 把前面写的所有的轮子（线程池、Asio网络框架、日志系统、锁机制）整合。设计一个简单的文本协议（如 <code>SET key value\n</code>, <code>GET key\n</code>）。</li>
+</ul>
+</li>
+<li><strong>Day 2: 业务逻辑与并发数据结构</strong><ul>
+<li><strong>实操</strong>: 实现底层的 KV 存储字典，必须保证多线程访问下的线程安全性（可以使用 Week 6 思考的并发 Map 或是全局读写锁 <code>shared_mutex</code>）。</li>
+</ul>
+</li>
+<li><strong>Day 3: 指标观测统计</strong><ul>
+<li><strong>实操</strong>: 在系统中埋点，每隔 5 秒向控制台&#x2F;日志打印一次 QPS、处理请求总数、当前线程池任务排队长度等指标。</li>
+</ul>
+</li>
+<li><strong>Day 4: 极限破坏性测试与优化</strong><ul>
+<li><strong>实操</strong>: 用脚本向 Server 发送半截子请求（不发 <code>\n</code>）、超长 Payload、或者发起大量空连接。保证服务端不会由于单个恶意请求 OOM 或崩溃。用 <code>perf</code> 抓取满载热点做最后调优。</li>
+</ul>
+</li>
+<li><strong>Day 5: 毕业复盘与简历素材沉淀</strong><ul>
+<li><strong>实操</strong>: 编写完整的项目 <code>README.md</code>（包含架构图、构建说明、依赖要求、压测结果与优化过程记录）。整理 <code>week12.md</code>，庆祝 12 周硬核挑战达成！</li>
+<li><strong>提示</strong>: 这一步的产出，直接可以作为你换工作时简历上的“亮点项目”或“技术博客文章”。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="💡-成功指标与自检-每周末对照"><a href="#💡-成功指标与自检-每周末对照" class="headerlink" title="💡 成功指标与自检 (每周末对照)"></a>💡 成功指标与自检 (每周末对照)</h2><ul>
+<li><input disabled="" type="checkbox"> 本周的代码<strong>一定</strong>能跑通编译并在 Linux 上成功运行。</li>
+<li><input disabled="" type="checkbox"> 遇到了问题不是靠猜测，而是能拿出 <strong>“证据链”</strong>：TSan 报警日志 &#x2F; perf 火焰图 &#x2F; GDB core 堆栈。</li>
+<li><input disabled="" type="checkbox"> 能用 3 句话说明白本周产出组件的：<strong>所有权边界</strong>、<strong>生命周期关闭语义</strong>、<strong>并发模型</strong>。</li>
+<li><input disabled="" type="checkbox"> 你的组件没有任何零散的全局变量，能在接下来的新项目中直接 <code>#include</code> 复用。</li>
+</ul>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li>👉 <strong>开篇词：12 周（3 个月）C++11 进阶学习计划</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/02/26/%E7%BA%A2%E7%B1%B3%E4%BA%91/" rel="prev" title="涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南">
+                  <i class="fa fa-angle-left"></i> 涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week00/" rel="next" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">
+                  C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

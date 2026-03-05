@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="来自老工程师的嘱托：过去五周，我们使用的并发防御武器都是 std::mutex（互斥锁）。它非常可靠，但它的代价是：当线程拿不到锁时，会被操作系统挂起，发生线程上下文切换（Context Switch），这个开销在纳秒级的微观世界里是非常巨大的（可能高达几微秒）。 有没有一种方法，不需要把线程挂起，也能保证对数据的并发读写是绝对安全的？欢迎来到 C++ 并发编程的最深水区：底层原子操作（Atom">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week06/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="来自老工程师的嘱托：过去五周，我们使用的并发防御武器都是 std::mutex（互斥锁）。它非常可靠，但它的代价是：当线程拿不到锁时，会被操作系统挂起，发生线程上下文切换（Context Switch），这个开销在纳秒级的微观世界里是非常巨大的（可能高达几微秒）。 有没有一种方法，不需要把线程挂起，也能保证对数据的并发读写是绝对安全的？欢迎来到 C++ 并发编程的最深水区：底层原子操作（Atom">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:07:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:18:43.948Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week06/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week06/","path":"2026/03/05/cpp11-series/week06/","title":"C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-std-atomic-%E5%9F%BA%E7%A1%80%E4%B8%8E%E6%97%A0%E9%94%81%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="nav-number">1.</span> <span class="nav-text">Day 1: std::atomic 基础与无锁计数器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9ACPU-%E6%98%AF%E6%80%8E%E4%B9%88%E4%BF%9D%E8%AF%81%E2%80%9C%E4%B8%8D%E8%A2%AB%E6%89%93%E6%96%AD%E2%80%9D%E7%9A%84%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：CPU 是怎么保证“不被打断”的？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%88%9D%E6%AD%A5-memory-order-relaxed-seq-cst"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 内存模型初步 (memory_order_relaxed &#x2F; seq_cst)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%BC%96%E8%AF%91%E5%99%A8%E5%92%8C-CPU-%E5%AF%B9%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%A0%81%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88%E6%89%8B%E8%84%9A%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：编译器和 CPU 对你的代码做了什么手脚？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-1"><span class="nav-number">2.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-1"><span class="nav-number">2.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-Acquire-Release-%E8%AF%AD%E4%B9%89%E4%B8%8E%E6%89%8B%E5%86%99%E8%87%AA%E6%97%8B%E9%94%81-SpinLock"><span class="nav-number">3.</span> <span class="nav-text">Day 3: Acquire-Release 语义与手写自旋锁 (SpinLock)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%8B%BF%E4%BB%80%E4%B9%88%E4%BF%9D%E8%AF%81%E4%BD%A0%E5%86%99%E7%9A%84%E6%95%B0%E6%8D%AE%E5%88%AB%E4%BA%BA%E4%B8%80%E5%AE%9A%E8%83%BD%E8%AF%BB%E5%88%B0%EF%BC%9F"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：拿什么保证你写的数据别人一定能读到？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E5%B9%B6%E5%8F%91%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1%E6%9D%83%E8%A1%A1-%E5%88%86%E6%AE%B5%E9%94%81%E6%80%9D%E6%83%B3"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 并发数据结构设计权衡 (分段锁思想)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%94%A8%E4%B8%80%E6%8A%8A%E5%A4%A7%E9%94%81%E9%94%81%E4%BD%8F%E6%95%B4%E4%B8%AA-Map%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：为什么不用一把大锁锁住整个 Map？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-2"><span class="nav-number">4.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E5%8E%8B%E6%B5%8B%E4%B8%8E%E6%9C%AC%E5%91%A8%E9%AA%8C%E6%94%B6"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 性能对比压测与本周验收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%BA%B8%E4%B8%8A%E5%BE%97%E6%9D%A5%E7%BB%88%E8%A7%89%E6%B5%85"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：纸上得来终觉浅</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week06/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:07:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:07:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>过去五周，我们使用的并发防御武器都是 <code>std::mutex</code>（互斥锁）。它非常可靠，但它的代价是：当线程拿不到锁时，会被操作系统挂起，发生<strong>线程上下文切换（Context Switch）</strong>，这个开销在纳秒级的微观世界里是非常巨大的（可能高达几微秒）。</p>
+<p>有没有一种方法，不需要把线程挂起，也能保证对数据的并发读写是绝对安全的？<br>欢迎来到 C++ 并发编程的最深水区：<strong>底层原子操作（Atomic Operations）与内存模型（Memory Model）</strong>。</p>
+<p>在这周，我们将学习如何用硬件级别的支持，抛弃笨重的互斥锁，实现极速的无锁（Lock-free）甚至等待无关（Wait-free）的代码。这是你通往顶级性能优化专家的必经之路，也是 C++ 区别于其他高级语言的硬核底蕴。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-std-atomic-基础与无锁计数器"><a href="#Day-1-std-atomic-基础与无锁计数器" class="headerlink" title="Day 1: std::atomic 基础与无锁计数器"></a>Day 1: std::atomic 基础与无锁计数器</h2><h3 id="🎯-知识点深度剖析：CPU-是怎么保证“不被打断”的？"><a href="#🎯-知识点深度剖析：CPU-是怎么保证“不被打断”的？" class="headerlink" title="🎯 知识点深度剖析：CPU 是怎么保证“不被打断”的？"></a>🎯 知识点深度剖析：CPU 是怎么保证“不被打断”的？</h3><p>在普通代码里，<code>count++</code> 翻译成汇编是三条指令：读到寄存器 -&gt; 寄存器加1 -&gt; 写回内存。中间随时会被打断。<br>如果我们用 <code>std::atomic&lt;int&gt; count;</code>，再执行 <code>count++</code>。编译器会利用底层 CPU 的特殊指令（比如 x86 下的 <code>LOCK XADD</code>，或者 ARM 下的 <code>LL/SC</code>）。这种指令在执行时，会在硬件总线上锁住这块内存，保证这三个动作一气呵成，绝对不可分割。这就叫<strong>原子性（Atomicity）</strong>。</p>
+<p>因为没有涉及到操作系统的休眠和唤醒，纯硬件搞定，所以它的性能比 <code>std::mutex</code> 快非常多（在争用不剧烈的情况下）。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《C++ Concurrency in Action》 Chapter 5.1 &amp; 5.2</strong>: 认识 <code>std::atomic</code> 家族。了解什么是 <code>is_lock_free()</code>（C++ 标准甚至允许 atomic 在某些奇葩硬件上退化成锁，所以要学会检查）。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？"><a href="#🏆-学到什么水平才算通关？" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>能熟练使用 <code>std::atomic&lt;T&gt;</code> 替换简单的计数器和状态标志位。了解 <code>load()</code>、<code>store()</code> 和 <code>fetch_add()</code> 的基本语义。</p>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用 atomic 替换互斥锁计数器</strong><br>新建 <code>week06/day01.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;spdlog/spdlog.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 曾经我们为了保护它需要一把大锁</span></span><br><span class="line"><span class="comment">// int global_counter = 0;</span></span><br><span class="line"><span class="comment">// std::mutex mtx;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 现在的神兵利器</span></span><br><span class="line">std::atomic&lt;<span class="type">int</span>&gt; atomic_counter&#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Worker</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; ++i) &#123;</span><br><span class="line">        <span class="comment">// 这行代码是绝对线程安全的！底层翻译为原子加法指令。</span></span><br><span class="line">        atomic_counter++; </span><br><span class="line">        <span class="comment">// 等同于 atomic_counter.fetch_add(1);</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> start = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    </span><br><span class="line">    std::vector&lt;std::thread&gt; threads;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; ++i) threads.<span class="built_in">emplace_back</span>(Worker);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : threads) t.<span class="built_in">join</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">auto</span> end = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>, std::milli&gt; ms = end - start;</span><br><span class="line">    </span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;最终结果 (期望 1000000): &#123;&#125;&quot;</span>, atomic_counter.<span class="built_in">load</span>());</span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;耗时: &#123;:.2f&#125; ms&quot;</span>, ms.<span class="built_in">count</span>());</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 硬件探秘：检查它是不是真的硬件无锁</span></span><br><span class="line">    <span class="keyword">if</span> (atomic_counter.<span class="built_in">is_lock_free</span>()) &#123;</span><br><span class="line">        spdlog::<span class="built_in">info</span>(<span class="string">&quot;硬件证明：这个 atomic 是真无锁的！&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译并运行。不仅结果绝对正确，而且耗时远低于加锁的版本。</p>
+<hr>
+<h2 id="Day-2-内存模型初步-memory-order-relaxed-seq-cst"><a href="#Day-2-内存模型初步-memory-order-relaxed-seq-cst" class="headerlink" title="Day 2: 内存模型初步 (memory_order_relaxed &#x2F; seq_cst)"></a>Day 2: 内存模型初步 (memory_order_relaxed &#x2F; seq_cst)</h2><h3 id="🎯-知识点深度剖析：编译器和-CPU-对你的代码做了什么手脚？"><a href="#🎯-知识点深度剖析：编译器和-CPU-对你的代码做了什么手脚？" class="headerlink" title="🎯 知识点深度剖析：编译器和 CPU 对你的代码做了什么手脚？"></a>🎯 知识点深度剖析：编译器和 CPU 对你的代码做了什么手脚？</h3><p>这是 C++ 并发最烧脑的部分。<br>为了优化性能，编译器会<strong>打乱你代码的执行顺序</strong>（指令重排）；更可怕的是，在多核 CPU 下，因为有各级 Cache（L1&#x2F;L2&#x2F;L3）的存在，一个核心对内存的修改，<strong>并不一定会立刻被另一个核心看到</strong>（可见性问题）。</p>
+<p>默认情况下，当你操作 <code>std::atomic</code> 时，C++ 采用的是最严苛的内存顺序：<code>std::memory_order_seq_cst</code>（顺序一致性）。它要求所有线程看到的操作顺序必须完全一致，这需要 CPU 插入很重的内存屏障（Memory Barrier），会牺牲一定的性能。</p>
+<p>如果你仅仅是想做一个“网页访问量统计器”，你根本不关心两个线程谁先加谁后加，你只在乎最终的总数。这个时候，你可以告诉编译器：“放飞自我吧，只要保证这步加法不被打断就行，顺序随便乱”。这就是最松散的 <code>std::memory_order_relaxed</code>。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）-1"><a href="#📚-老兵推荐阅读（理论补强）-1" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《C++ Concurrency in Action》 Chapter 5.3</strong>: Synchronizing operations and enforcing ordering。仔细理解什么是 <code>happens-before</code> 关系。这可能需要反复读三遍以上。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-1"><a href="#🏆-学到什么水平才算通关？-1" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>面试时，当面试官问你 <code>memory_order</code>，你能说出：</p>
+<ul>
+<li><code>seq_cst</code> 是默认的最安全也是最慢的。</li>
+<li><code>relaxed</code> 只保证自身的原子性，不保证周围其他代码的可见性顺序，适用于纯计数器。</li>
+</ul>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：为你的计数器松绑</strong><br>修改昨天 <code>day01.cpp</code> 中的累加代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Worker</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; ++i) &#123;</span><br><span class="line">        <span class="comment">// 使用 relaxed 松散模型。</span></span><br><span class="line">        <span class="comment">// 因为这段循环里，我们除了加 counter，没有其他相互依赖的逻辑（比如没用它做 if 判断）</span></span><br><span class="line">        atomic_counter.<span class="built_in">fetch_add</span>(<span class="number">1</span>, std::memory_order_relaxed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>重新编译。在 x86 架构下，你可能看不出太大区别（因为 x86 是一种强内存序架构）；但在 ARM 架构（如 Mac M系列芯片、手机芯片）上，这种优化会带来可观的性能提升。</p>
+<hr>
+<h2 id="Day-3-Acquire-Release-语义与手写自旋锁-SpinLock"><a href="#Day-3-Acquire-Release-语义与手写自旋锁-SpinLock" class="headerlink" title="Day 3: Acquire-Release 语义与手写自旋锁 (SpinLock)"></a>Day 3: Acquire-Release 语义与手写自旋锁 (SpinLock)</h2><h3 id="🎯-知识点深度剖析：拿什么保证你写的数据别人一定能读到？"><a href="#🎯-知识点深度剖析：拿什么保证你写的数据别人一定能读到？" class="headerlink" title="🎯 知识点深度剖析：拿什么保证你写的数据别人一定能读到？"></a>🎯 知识点深度剖析：拿什么保证你写的数据别人一定能读到？</h3><p>假设一个经典场景：线程A往一个全局结构体里写好了一大堆数据，最后把一个原子标志位 <code>ready</code> 设为 <code>true</code>。线程B一直死循环等 <code>ready == true</code>，等到了就去读那些数据。</p>
+<p>如果线程A写 <code>ready.store(true, memory_order_relaxed)</code> 会发生什么恐怖的事？<br>因为是 relaxed，CPU 可能会把 <code>ready=true</code> 的指令<strong>重排到写数据之前</strong>！导致线程B看到了 ready，冲进去读数据，结果读到了还未初始化的垃圾内存！</p>
+<p><strong>Acquire-Release 语义</strong>就是为了解决这个“一写一读”的发布订阅问题而生的：</p>
+<ul>
+<li>线程A：写标志位时使用 <code>std::memory_order_release</code>。它保证：在这一行<strong>之前</strong>所有的内存写入，绝对不会被重排到这一行之后。</li>
+<li>线程B：读标志位时使用 <code>std::memory_order_acquire</code>。它保证：在这一行<strong>之后</strong>的所有内存读取，绝对不会被重排到这一行之前。<br>两者一结合，形成了一道坚不可摧的“同步屏障”。</li>
+</ul>
+<p><strong>自旋锁 (SpinLock)</strong>：利用这种机制，我们可以用一个原子布尔值写一个自旋锁。拿不到锁的线程就在 <code>while</code> 里原地空转（消耗 CPU 但不休眠），适合临界区极小、立刻就能拿到的场景。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：手写基于 <code>atomic_flag</code> 的极致自旋锁</strong><br>新建 <code>week06/day03_spinlock.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SpinLock</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">lock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// test_and_set() 是原子的：读取当前值并设置为 true。</span></span><br><span class="line">        <span class="comment">// 如果别人已经是 true 了，说明锁被占用，我在 while 里原地疯狂打转等待。</span></span><br><span class="line">        <span class="comment">// std::memory_order_acquire 保证拿到锁之后，才能去读写被保护的数据。</span></span><br><span class="line">        <span class="keyword">while</span> (flag_.<span class="built_in">test_and_set</span>(std::memory_order_acquire)) &#123;</span><br><span class="line">            <span class="comment">// 这里可以插入 _mm_pause() 缓解 CPU 压力，但为了展示极简原理暂略</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">unlock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 释放锁。</span></span><br><span class="line">        <span class="comment">// std::memory_order_release 保证：在我释放锁之前对数据的修改，必定已经写回了内存！</span></span><br><span class="line">        flag_.<span class="built_in">clear</span>(std::memory_order_release);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ATOMIC_FLAG_INIT 保证了初始化为 false。它是 C++11 里唯一保证永远无锁的类型。</span></span><br><span class="line">    std::atomic_flag flag_ = ATOMIC_FLAG_INIT;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">SpinLock spinlock;</span><br><span class="line"><span class="type">int</span> shared_data = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FastWorker</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; ++i) &#123;</span><br><span class="line">        spinlock.<span class="built_in">lock</span>();</span><br><span class="line">        shared_data++; <span class="comment">// 临界区极小，用自旋锁非常合适</span></span><br><span class="line">        spinlock.<span class="built_in">unlock</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::vector&lt;std::thread&gt; threads;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">4</span>; ++i) threads.<span class="built_in">emplace_back</span>(FastWorker);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : threads) t.<span class="built_in">join</span>();</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;自旋锁保护下的数据: &quot;</span> &lt;&lt; shared_data &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把这段代码加入 CMake 并跑一下。你刚刚写出了一把比操作系统 Mutex 更底层的锁！</p>
+<hr>
+<h2 id="Day-4-并发数据结构设计权衡-分段锁思想"><a href="#Day-4-并发数据结构设计权衡-分段锁思想" class="headerlink" title="Day 4: 并发数据结构设计权衡 (分段锁思想)"></a>Day 4: 并发数据结构设计权衡 (分段锁思想)</h2><h3 id="🎯-知识点深度剖析：为什么不用一把大锁锁住整个-Map？"><a href="#🎯-知识点深度剖析：为什么不用一把大锁锁住整个-Map？" class="headerlink" title="🎯 知识点深度剖析：为什么不用一把大锁锁住整个 Map？"></a>🎯 知识点深度剖析：为什么不用一把大锁锁住整个 Map？</h3><p>上周我们手写了 Cache，用一把 <code>std::mutex</code> 锁住了整个 <code>std::map</code>。<br>如果这是一个有 10 万并发连接的服务器，100 个线程都在争抢同一把锁，哪怕它们查的是完全不同的 Key（比如 A 查 “user1”，B 查 “user2”），它们也会被这把全局大锁堵得死死的，性能直线崩溃。这种现象叫做<strong>锁竞争（Lock Contention）</strong>。</p>
+<p>在无锁哈希表（极其极其复杂）和全局大锁之间，工业界最常用的妥协方案是：<strong>分段锁（Striped Locks &#x2F; Lock Striping）</strong>。<br>它的思想极其巧妙：我不锁整个 Map，我建一个有 16 个桶（Buckets）的数组，每个桶里有一把独立的小锁和一个小的 <code>std::map</code>（或者 list）。<br>当你要查一个 Key 时，先对其算一个 Hash 模 16，落到第几个桶，就只去抢那个桶的锁！<br>这样，100 个线程就被分散到了 16 把锁上，锁冲突的概率降低了 16 倍，吞吐量暴增。这就是著名的 Java <code>ConcurrentHashMap</code>（早年版本）和 C++ <code>TBB</code> 库的核心思想。</p>
+<h3 id="🏆-学到什么水平才算通关？-2"><a href="#🏆-学到什么水平才算通关？-2" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>深刻理解“锁粒度（Lock Granularity）”的概念。能够手写出一个简单的分段锁哈希表骨架。</p>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：手撕分段锁 ConcurrentHashMap 的骨架</strong><br>新建 <code>week06/StripedMap.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;list&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Key, <span class="keyword">typename</span> Value&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">StripedMap</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 每个桶包含一把自己的锁和存数据的链表（这里用 list 简单解决哈希冲突）</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">Bucket</span> &#123;</span><br><span class="line">        std::mutex mutex;</span><br><span class="line">        std::list&lt;std::pair&lt;Key, Value&gt;&gt; data;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    std::vector&lt;Bucket&gt; buckets_;</span><br><span class="line">    std::hash&lt;Key&gt; hasher_;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 构造函数，默认开 16 个桶</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">StripedMap</span><span class="params">(<span class="type">size_t</span> num_buckets = <span class="number">16</span>)</span> : buckets_(num_buckets) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 禁用拷贝</span></span><br><span class="line">    <span class="built_in">StripedMap</span>(<span class="type">const</span> StripedMap&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    StripedMap&amp; <span class="keyword">operator</span>=(<span class="type">const</span> StripedMap&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Put</span><span class="params">(<span class="type">const</span> Key&amp; key, <span class="type">const</span> Value&amp; value)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 核心：算出这把钥匙该去哪个桶</span></span><br><span class="line">        <span class="type">size_t</span> bucket_idx = <span class="built_in">hasher_</span>(key) % buckets_.<span class="built_in">size</span>();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 仅仅锁住这一个桶！其他 15 个桶里的数据依然可以被并发读写不受影响！</span></span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(buckets_[bucket_idx].mutex)</span></span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 在链表里找找有没有这个 key</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; kv : buckets_[bucket_idx].data) &#123;</span><br><span class="line">            <span class="keyword">if</span> (kv.first == key) &#123;</span><br><span class="line">                kv.second = value; <span class="comment">// 覆盖旧值</span></span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 没找到，就插入新值</span></span><br><span class="line">        buckets_[bucket_idx].data.<span class="built_in">emplace_back</span>(key, value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">Get</span><span class="params">(<span class="type">const</span> Key&amp; key, Value&amp; out_val)</span> </span>&#123;</span><br><span class="line">        <span class="type">size_t</span> bucket_idx = <span class="built_in">hasher_</span>(key) % buckets_.<span class="built_in">size</span>();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 同样，只锁住自己那个桶</span></span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(buckets_[bucket_idx].mutex)</span></span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; kv : buckets_[bucket_idx].data) &#123;</span><br><span class="line">            <span class="keyword">if</span> (kv.first == key) &#123;</span><br><span class="line">                out_val = kv.second;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>感受这种化整为零的设计美学。它的吞吐量远超全局单锁的 Map。</p>
+<hr>
+<h2 id="Day-5-性能对比压测与本周验收"><a href="#Day-5-性能对比压测与本周验收" class="headerlink" title="Day 5: 性能对比压测与本周验收"></a>Day 5: 性能对比压测与本周验收</h2><h3 id="🎯-知识点深度剖析：纸上得来终觉浅"><a href="#🎯-知识点深度剖析：纸上得来终觉浅" class="headerlink" title="🎯 知识点深度剖析：纸上得来终觉浅"></a>🎯 知识点深度剖析：纸上得来终觉浅</h3><p>我们造了自旋锁，又造了分段锁。今天我们要写一段压测代码，真刀真枪地拉出来和系统自带的互斥锁比比性能。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：编写并发压测</strong><br>写一个 <code>week06/day05_benchmark.cpp</code>。你自己设计以下场景：</p>
+<ol>
+<li>起 10 个线程，疯狂操作一个用全局 <code>std::mutex</code> 保护的 <code>std::map</code> 100万次。记录耗时。</li>
+<li>起 10 个线程，疯狂操作昨天写的 <code>StripedMap</code> 100万次。记录耗时。<br>在 CMake 中开启 <code>-O2</code> 优化并运行。你会震撼地发现分段锁把全局锁按在地上摩擦。</li>
+</ol>
+<p><strong>任务 2：提交里程碑</strong><br>梳理本周晦涩难懂的 <code>atomic</code> 概念进入 <code>week06.md</code> 笔记。<br>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 06: 深入并发深水区，掌握 atomic 内存序、自旋锁与分段锁吞吐量优化&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这周的内容极其烧脑。能把这些概念吃透，你在任何 C++ 架构师面试中都能谈笑风生。下周，我们要休息一下脑子，玩一玩性能诊断工具和火焰图。周末愉快！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li>👉 <strong>Week 06：原子操作与锁的进阶（无锁编程的深水区）</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week05/" rel="prev" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week07/" rel="next" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">
+                  C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

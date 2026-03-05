@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="来自老工程师的嘱托：恭喜你坚持到了第四周！前三周我们学会了加锁防竞争、用条件变量同步、用 future 拿结果。这些都是多线程的“术”。 但在真实的大型 C++ 后端项目中，多线程最让你崩溃的往往不是数据算错了，而是：“这块内存到底该谁来释放？！” 想象一下：网络线程接收了一个连接请求，创建了一个 Connection 对象，然后把它扔给了业务线程池去处理；同时，定时器线程还在倒计时，准备在这个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week04/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="来自老工程师的嘱托：恭喜你坚持到了第四周！前三周我们学会了加锁防竞争、用条件变量同步、用 future 拿结果。这些都是多线程的“术”。 但在真实的大型 C++ 后端项目中，多线程最让你崩溃的往往不是数据算错了，而是：“这块内存到底该谁来释放？！” 想象一下：网络线程接收了一个连接请求，创建了一个 Connection 对象，然后把它扔给了业务线程池去处理；同时，定时器线程还在倒计时，准备在这个">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:05:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:18:43.923Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week04/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week04/","path":"2026/03/05/cpp11-series/week04/","title":"C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-%E7%8B%AC%E5%8D%A0%E6%89%80%E6%9C%89%E6%9D%83%E4%B8%8E-std-unique-ptr-%E7%9A%84%E7%BB%9D%E4%B8%8D%E5%A6%A5%E5%8D%8F"><span class="nav-number">1.</span> <span class="nav-text">Day 1: 独占所有权与 std::unique_ptr 的绝不妥协</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E8%A3%B8%E6%8C%87%E9%92%88%E7%9A%84%E7%BD%AA%E4%B8%8E%E7%BD%9A"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：裸指针的罪与罚</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E5%85%B1%E4%BA%AB%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E4%B8%8E%E5%A4%9A%E7%BA%BF%E7%A8%8B%E8%BF%B7%E6%80%9D-std-shared-ptr"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 共享智能指针与多线程迷思 (std::shared_ptr)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%96%B0%E6%89%8B%E6%9C%80%E5%AE%B9%E6%98%93%E8%B8%A9%E5%9D%91%E7%9A%84%E5%B9%B6%E5%8F%91%E5%9C%B0%E9%9B%B7"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：新手最容易踩坑的并发地雷</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-1"><span class="nav-number">2.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-1"><span class="nav-number">2.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8%E4%B8%8E%E7%94%9F%E6%AD%BB%E6%8E%A2%E6%B5%8B-std-weak-ptr"><span class="nav-number">3.</span> <span class="nav-text">Day 3: 循环引用与生死探测 (std::weak_ptr)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E5%A6%82%E4%BD%95%E5%AE%89%E5%85%A8%E5%9C%B0%E9%97%AE%E4%B8%80%E5%8F%A5%E2%80%9C%E4%BD%A0%E8%BF%98%E6%B4%BB%E7%9D%80%E5%90%97%EF%BC%9F%E2%80%9D"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：如何安全地问一句“你还活着吗？”</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-2"><span class="nav-number">3.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-2"><span class="nav-number">3.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E5%91%8A%E5%88%AB-std-cout%EF%BC%8C%E6%8B%A5%E6%8A%B1%E7%8E%B0%E4%BB%A3%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%BA%93-fmt"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 告别 std::cout，拥抱现代格式化库 fmt</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%B5%81%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：流操作符 &lt;&lt; 在多线程里的痛</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-3"><span class="nav-number">4.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-3"><span class="nav-number">4.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E7%BB%BC%E5%90%88%E5%A4%A7%E7%BB%83%E5%85%B5-%E5%86%99%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E5%85%A8%E5%B1%80-Cache"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 综合大练兵 (写一个线程安全的全局 Cache)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E4%B8%8E%E9%94%81%E7%9A%84%E5%B7%85%E5%B3%B0%E5%AF%B9%E5%86%B3"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：智能指针与锁的巅峰对决</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week04/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:05:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:05:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>恭喜你坚持到了第四周！前三周我们学会了加锁防竞争、用条件变量同步、用 future 拿结果。这些都是多线程的“术”。</p>
+<p>但在真实的大型 C++ 后端项目中，多线程最让你崩溃的往往不是数据算错了，而是：<strong>“这块内存到底该谁来释放？！”</strong></p>
+<p>想象一下：网络线程接收了一个连接请求，创建了一个 <code>Connection</code> 对象，然后把它扔给了业务线程池去处理；同时，定时器线程还在倒计时，准备在这个连接超时的时候把它关掉。<br>请问，这个 <code>Connection</code> 对象，到底应该由谁去 <code>delete</code>？网络线程？业务线程？还是定时器线程？</p>
+<p>如果提前删了，别的线程去访问就是悬垂指针（Use-After-Free），当场崩溃。<br>如果大家都怕背锅不删，那就是内存泄漏（Memory Leak），服务器迟早 OOM。</p>
+<p>这周我们要跨越 C++ 并发编程的分水岭，用现代 C++ 的<strong>智能指针</strong>来优雅地解决“多线程生命周期管理”这个世纪难题。同时，为了让后面多线程调试不再像盲人摸象，我们将在本周引入现代 C++ 开发中最性感的格式化与日志库：<code>fmt</code>。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-独占所有权与-std-unique-ptr-的绝不妥协"><a href="#Day-1-独占所有权与-std-unique-ptr-的绝不妥协" class="headerlink" title="Day 1: 独占所有权与 std::unique_ptr 的绝不妥协"></a>Day 1: 独占所有权与 std::unique_ptr 的绝不妥协</h2><h3 id="🎯-知识点深度剖析：裸指针的罪与罚"><a href="#🎯-知识点深度剖析：裸指针的罪与罚" class="headerlink" title="🎯 知识点深度剖析：裸指针的罪与罚"></a>🎯 知识点深度剖析：裸指针的罪与罚</h3><p>在 C 语言时代，我们用 <code>malloc/free</code>，在老 C++ 时代，我们用 <code>new/delete</code>。这叫“裸指针（Raw Pointer）”。<br>当你在一个函数的返回值看到 <code>Task*</code> 时，你会陷入深深的恐惧：</p>
+<ol>
+<li>这个指针是我去释放吗？还是系统会帮我释放？</li>
+<li>我应该用 <code>delete</code> 还是 <code>delete[]</code> 还是某个专门的 <code>DestroyTask()</code> 函数？</li>
+<li>如果我不小心拷贝了一份，谁才是真正的主人？</li>
+</ol>
+<p>现代 C++（C++11及以后）给出了一条铁律：<strong>禁止在业务代码中使用裸指针去管理资源，裸指针只配用来“不拥有所有权地观察”</strong>。</p>
+<p>取而代之的是 <code>std::unique_ptr</code>。它的核心哲学是<strong>独占所有权（Exclusive Ownership）</strong>。<br>任何时刻，只能有一个 <code>unique_ptr</code> 指向这块堆内存。<br>它<strong>禁止拷贝</strong>（Copy）。如果你想把它交给别人（比如扔进子线程，或者塞进队列），你必须使用 <code>std::move</code>。<br>一旦被 Move 走，原来的指针立刻变为空（<code>nullptr</code>）。这种在代码层面上强制执行“所有权转移”的做法，让资源的生命周期极其清晰，离开作用域自动 <code>delete</code>，而且<strong>零性能开销</strong>（它在底层编译后和裸指针跑得一样快）。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 18</strong>: <em>Use <code>std::unique_ptr</code> for exclusive-ownership resource management</em>.（深入理解为什么 unique_ptr 是零开销抽象，以及如何自定义 deleter）。</li>
+<li><strong>C++ Core Guidelines</strong>: <a target="_blank" rel="noopener" href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-owner">R.20: Use <code>unique_ptr</code> or <code>shared_ptr</code> to represent ownership</a>。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？"><a href="#🏆-学到什么水平才算通关？" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>从此以后，看到 <code>new</code> 就觉得刺眼，能熟练运用 <code>std::make_unique</code>（C++14引入，C++11可自行简单封装）或直接初始化。深刻理解为什么向多线程传递 <code>unique_ptr</code> 时必须用 <code>std::move</code>，并且明白这是比加锁更高级的数据安全防护：<strong>如果你连指针都拿不到了，你当然不可能去引发并发修改</strong>。</p>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：体验 unique_ptr 的强制所有权转移</strong><br>新建 <code>week04/day01.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BigData</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BigData</span>(<span class="type">int</span> id) : <span class="built_in">id_</span>(id) &#123; std::cout &lt;&lt; <span class="string">&quot;BigData &quot;</span> &lt;&lt; id_ &lt;&lt; <span class="string">&quot; 诞生了。\n&quot;</span>; &#125;</span><br><span class="line">    ~<span class="built_in">BigData</span>() &#123; std::cout &lt;&lt; <span class="string">&quot;BigData &quot;</span> &lt;&lt; id_ &lt;&lt; <span class="string">&quot; 被安全销毁了。\n&quot;</span>; &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Process</span><span class="params">()</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;处理数据 &quot;</span> &lt;&lt; id_ &lt;&lt; <span class="string">&quot;...\n&quot;</span>; &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> id_;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 创建一个独占智能指针（C++14 推荐用 std::make_unique，C++11 我们先这么写）</span></span><br><span class="line">    <span class="function">std::unique_ptr&lt;BigData&gt; <span class="title">ptr</span><span class="params">(<span class="keyword">new</span> BigData(<span class="number">100</span>))</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 致命错误：如果你尝试拷贝它，编译直接报错！</span></span><br><span class="line">    <span class="comment">// 解开下面这行注释，看看编译器的毒打：</span></span><br><span class="line">    <span class="comment">// std::unique_ptr&lt;BigData&gt; ptr_copy = ptr; </span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 安全的做法：通过 std::move 剥夺主线程的所有权，移交给子线程</span></span><br><span class="line">    <span class="comment">// 注意：在 C++11 的 Lambda 中，无法直接使用 [ptr = std::move(ptr)] (这是 C++14 的初始化捕获)。</span></span><br><span class="line">    <span class="comment">// 为了在 C++11 的线程中传递 unique_ptr，我们通过 std::bind 或者按参数传递给线程函数。</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">auto</span> worker = [](std::unique_ptr&lt;BigData&gt; p) &#123;</span><br><span class="line">        std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">500</span>));</span><br><span class="line">        p-&gt;<span class="built_in">Process</span>();</span><br><span class="line">        <span class="comment">// 离开这个 Lambda 的作用域时，p 会自动析构并销毁底层的 BigData</span></span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建线程，并 move 指针进去</span></span><br><span class="line">    <span class="function">std::thread <span class="title">t</span><span class="params">(worker, std::move(ptr))</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 验证主线程被“掏空”</span></span><br><span class="line">    <span class="keyword">if</span> (!ptr) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[主线程] ptr 已经为空，我失去了对它的控制权。所以绝不可能发生数据竞争！\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译运行，仔细观察控制台输出的顺序。你会发现不需要任何 <code>delete</code>，对象也被安全回收了，而且由于主线程在 <code>move</code> 之后彻底失去了指针，这从物理上杜绝了多线程下两个线程同时访问同一个对象的可能。</p>
+<hr>
+<h2 id="Day-2-共享智能指针与多线程迷思-std-shared-ptr"><a href="#Day-2-共享智能指针与多线程迷思-std-shared-ptr" class="headerlink" title="Day 2: 共享智能指针与多线程迷思 (std::shared_ptr)"></a>Day 2: 共享智能指针与多线程迷思 (<code>std::shared_ptr</code>)</h2><h3 id="🎯-知识点深度剖析：新手最容易踩坑的并发地雷"><a href="#🎯-知识点深度剖析：新手最容易踩坑的并发地雷" class="headerlink" title="🎯 知识点深度剖析：新手最容易踩坑的并发地雷"></a>🎯 知识点深度剖析：新手最容易踩坑的并发地雷</h3><p>既然 <code>unique_ptr</code> 这么好，那为什么要 <code>shared_ptr</code>？<br>回到文章开头的例子：一个 <code>Connection</code> 对象，被网络读线程、写线程、定时器线程同时持有着。没有任何一个线程敢说“这个对象归我独占”。<br>这时候必须出动 <code>std::shared_ptr</code>（基于引用计数）。<br>谁拷贝了一份，引用计数 +1；谁析构了，引用计数 -1。当计数归零，最后那个离开的人负责把灯关了（<code>delete</code> 对象）。</p>
+<p><strong>💀 但这里隐藏着面试最高频、也是企业代码里死得最惨的迷思：</strong><br>面试官问：“<code>shared_ptr</code> 是线程安全的吗？”<br>很多半吊子会自信回答：“是！因为它的引用计数是原子操作（Atomic），所以多线程读写是安全的！”</p>
+<p><strong>大错特错！</strong><br><code>shared_ptr</code> 底层由两部分组成：</p>
+<ol>
+<li><strong>控制块（Control Block）</strong>：里面存着引用计数（强引用和弱引用），这个块的修改确实是原子的、线程安全的。</li>
+<li><strong>数据指针（Raw Pointer）</strong>：指向你真正的业务对象（比如 <code>Connection</code>）。</li>
+</ol>
+<p><strong>铁律：多个线程同时拷贝、析构同一个 <code>shared_ptr</code> 对象是安全的（控制块安全）；但多个线程同时通过 <code>shared_ptr</code> 去读写它指向的那个“业务对象”的内部数据，绝不是线程安全的！依然需要加锁！</strong></p>
+<h4 id="📚-老兵推荐阅读（理论补强）-1"><a href="#📚-老兵推荐阅读（理论补强）-1" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 19 &amp; 21</strong>: <em>Use <code>std::shared_ptr</code> for shared-ownership</em> 和 <em>Prefer <code>std::make_shared</code>…</em>。（必须透彻理解“控制块”是什么东西）。</li>
+<li><strong>cppreference</strong>: <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/memory/shared_ptr">std::shared_ptr</a> 中关于 Thread safety 的那几句加粗的警告。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-1"><a href="#🏆-学到什么水平才算通关？-1" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>能精准画出 <code>shared_ptr</code> 底层的“双指针”结构（一个指数据，一个指控制块）。永远优先使用 <code>std::make_shared</code>（它能把数据和控制块分配在一块连续内存上，省去一次 <code>new</code> 的开销且防内存泄漏）。绝不在多线程无锁的环境下通过 <code>shared_ptr</code> 修改业务数据。</p>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用 TSan 戳破 shared_ptr 线程安全的谎言</strong><br>新建 <code>week04/day02.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">SharedState</span> &#123;</span><br><span class="line">    <span class="type">int</span> counter = <span class="number">0</span>; <span class="comment">// 这是业务数据</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 永远使用 make_shared，不要用 shared_ptr&lt;T&gt;(new T)</span></span><br><span class="line">    <span class="keyword">auto</span> global_state = std::<span class="built_in">make_shared</span>&lt;SharedState&gt;();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">auto</span> worker = [global_state]() &#123;</span><br><span class="line">        <span class="comment">// 注意：Lambda 按值捕获 global_state，这里发生了 shared_ptr 的拷贝。</span></span><br><span class="line">        <span class="comment">// 这步拷贝是线程安全的，底层引用计数原子 +1。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; ++i) &#123;</span><br><span class="line">            <span class="comment">// 致命错误：通过智能指针去修改底层的业务数据，这里并没有锁！</span></span><br><span class="line">            global_state-&gt;counter++; </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    std::vector&lt;std::thread&gt; threads;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        threads.<span class="built_in">emplace_back</span>(worker);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : threads) &#123;</span><br><span class="line">        t.<span class="built_in">join</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;最终计数 (期望 500000): &quot;</span> &lt;&lt; global_state-&gt;counter &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;当前引用计数: &quot;</span> &lt;&lt; global_state.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：抓捕与修复</strong><br>把 <code>day02.cpp</code> 加入 CMake，并开启 ThreadSanitizer（<code>-fsanitize=thread</code>）。<br>运行！你看，TSan 毫不留情地喷出了 <code>WARNING: ThreadSanitizer: data race</code>。<br><strong>修复它</strong>：在 <code>SharedState</code> 结构体里加一把 <code>std::mutex</code>，在 <code>global_state-&gt;counter++</code> 外面包上 <code>lock_guard</code>。再次运行，验证 TSan 报警消失。</p>
+<hr>
+<h2 id="Day-3-循环引用与生死探测-std-weak-ptr"><a href="#Day-3-循环引用与生死探测-std-weak-ptr" class="headerlink" title="Day 3: 循环引用与生死探测 (std::weak_ptr)"></a>Day 3: 循环引用与生死探测 (<code>std::weak_ptr</code>)</h2><h3 id="🎯-知识点深度剖析：如何安全地问一句“你还活着吗？”"><a href="#🎯-知识点深度剖析：如何安全地问一句“你还活着吗？”" class="headerlink" title="🎯 知识点深度剖析：如何安全地问一句“你还活着吗？”"></a>🎯 知识点深度剖析：如何安全地问一句“你还活着吗？”</h3><p>既然 <code>shared_ptr</code> 这么好用，那我们全都用它不就行了？<br>灾难发生在<strong>循环引用</strong>。<br>如果 A 对象里包含一个指向 B 的 <code>shared_ptr</code>，而 B 对象里又包含一个指向 A 的 <code>shared_ptr</code>。这两个对象的引用计数永远降不到 0，即使外部已经没有任何人使用它们了，这两块内存就成了宇宙中的幽灵，永远内存泄漏。</p>
+<p>这时候，需要引入<strong>观察者</strong>：<code>std::weak_ptr</code>。<br>它就像是一个探子。它可以从 <code>shared_ptr</code> 构造而来，但它<strong>绝对不会增加强引用计数</strong>。它只是静静地看着那块内存。</p>
+<p><strong>在多线程中的绝杀应用：探测对象的生死</strong><br>假设网络定时器想给 <code>Connection</code> 发一个心跳包，但它不知道这连接是不是已经在半秒前被另一根线程给关掉销毁了。<br>这时候，定时器手里应该拿着一个 <code>weak_ptr</code>。<br>当它想发数据时，调用 <code>weak_ptr::lock()</code> 尝试把它提升为 <code>shared_ptr</code>。</p>
+<ul>
+<li>如果对象还活着：<code>lock()</code> 成功返回一个有效的 <code>shared_ptr</code>。因为拿到了强引用，<strong>在发数据期间，就算别的线程想删对象，这块内存也绝对不会被销毁</strong>（计数被撑住了）。</li>
+<li>如果对象已死：<code>lock()</code> 返回空指针，定时器乖乖放弃。</li>
+</ul>
+<h4 id="📚-老兵推荐阅读（理论补强）-2"><a href="#📚-老兵推荐阅读（理论补强）-2" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 20</strong>: <em>Use <code>std::weak_ptr</code> for <code>std::shared_ptr</code> like pointers that can dangle</em>. （这里介绍了大名鼎鼎的 Observer 设计模式中如何避免回调指针失效）。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-2"><a href="#🏆-学到什么水平才算通关？-2" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>能手写一个包含死循环引用的内存泄漏代码，并用 <code>weak_ptr</code> 将其化解。深刻理解 <code>if (auto sp = wp.lock()) &#123; ... &#125;</code> 这种极其优美的多线程生命周期探测范式。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：演示多线程环境下的生死探测</strong><br>新建 <code>week04/day03.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Connection</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Connection</span>() &#123; std::cout &lt;&lt; <span class="string">&quot;[Connection] 已建立。\n&quot;</span>; &#125;</span><br><span class="line">    ~<span class="built_in">Connection</span>() &#123; std::cout &lt;&lt; <span class="string">&quot;[Connection] 已销毁，资源释放。\n&quot;</span>; &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">SendPing</span><span class="params">()</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;  -&gt; 发送心跳包 Pong!\n&quot;</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定时器线程，手里只拿弱引用</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">TimerThread</span><span class="params">(std::weak_ptr&lt;Connection&gt; weak_conn)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">        std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">500</span>));</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 神迹时刻：安全探测生命周期</span></span><br><span class="line">        <span class="comment">// lock() 操作是原子且线程安全的。如果对象活着，返回的 shared_ptr 保证你在使用期间对象不被销毁。</span></span><br><span class="line">        <span class="keyword">if</span> (std::shared_ptr&lt;Connection&gt; safe_conn = weak_conn.<span class="built_in">lock</span>()) &#123;</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;[定时器] 探测到连接还活着，发送心跳...\n&quot;</span>;</span><br><span class="line">            safe_conn-&gt;<span class="built_in">SendPing</span>();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;[定时器] 探测到连接已被销毁，停止发送。\n&quot;</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 模拟网络主线程</span></span><br><span class="line">    std::shared_ptr&lt;Connection&gt; conn = std::<span class="built_in">make_shared</span>&lt;Connection&gt;();</span><br><span class="line">    std::weak_ptr&lt;Connection&gt; weak_conn = conn; <span class="comment">// 生成探子</span></span><br><span class="line">    </span><br><span class="line">    <span class="function">std::thread <span class="title">timer_t</span><span class="params">(TimerThread, weak_conn)</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 主线程干了点别的事</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">1200</span>));</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] 发生网络异常，准备销毁连接对象！\n&quot;</span>;</span><br><span class="line">    <span class="comment">// 主动丢弃最后一个强引用，触发对象析构！</span></span><br><span class="line">    conn.<span class="built_in">reset</span>(); </span><br><span class="line">    </span><br><span class="line">    <span class="type">timer_t</span>.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行观察。你可以清晰地看到，当主线程 <code>conn.reset()</code> 销毁对象后，定时器线程里的 <code>weak_conn.lock()</code> 会极其优雅地发现目标已死，从而避免了严重的野指针崩溃。这就是防御性编程！</p>
+<hr>
+<h2 id="Day-4-告别-std-cout，拥抱现代格式化库-fmt"><a href="#Day-4-告别-std-cout，拥抱现代格式化库-fmt" class="headerlink" title="Day 4: 告别 std::cout，拥抱现代格式化库 fmt"></a>Day 4: 告别 std::cout，拥抱现代格式化库 fmt</h2><h3 id="🎯-知识点深度剖析：流操作符"><a href="#🎯-知识点深度剖析：流操作符" class="headerlink" title="🎯 知识点深度剖析：流操作符 &lt;&lt; 在多线程里的痛"></a>🎯 知识点深度剖析：流操作符 <code>&lt;&lt;</code> 在多线程里的痛</h3><p>在过去几天里，你是不是经常发现，当两个线程同时打印东西时，终端里的日志混成了一团乱麻？比如打出类似 <code>[Sub[Main] Thread] says hello...</code> 这种诡异的东西。<br>那是因为 <code>std::cout &lt;&lt; &quot;A&quot; &lt;&lt; &quot;B&quot; &lt;&lt; &quot;\n&quot;;</code> 本质上是连续三次调用了 <code>operator&lt;&lt;</code> 函数。在这三次调用之间，CPU 是完全可以把时间片切给别的线程去打印的！这叫“多线程交错输出”。</p>
+<p>在工业界，我们绝不会用 <code>std::cout</code> 来打日志。<br>C++20 引入了极其强大的 <code>std::format</code>，而在 C++11&#x2F;14 的年代，它的前身、著名的开源库 <strong><code>fmt</code></strong> 是每个现代 C++ 工程的标配。<br>它的语法 <code>fmt::print(&quot;Thread &#123;&#125; says &#123;&#125;\n&quot;, id, msg)</code>，由于内部会先在缓冲区把完整的字符串拼装好，然后再一次性调用底层的系统写入接口，极大地减少了被多线程打断的概率（虽然绝对的防交错依然需要专门的日志系统，但 <code>fmt</code> 已经秒杀了 <code>iostream</code>）。且它的性能比 <code>std::cout</code> 快好几倍。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）-3"><a href="#📚-老兵推荐阅读（理论补强）-3" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>GitHub <code>fmtlib/fmt</code> 官方文档</strong>: <a target="_blank" rel="noopener" href="https://fmt.dev/latest/index.html">fmt.dev</a>。感受一下它比 C 语言的 <code>printf</code> 安全在哪里，比 C++ 的 <code>iostream</code> 快在哪里。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-3"><a href="#🏆-学到什么水平才算通关？-3" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>在自己的 CMake 系统中优雅地集成第三方开源库。从今天起，你的代码里再也看不到 <code>std::cout</code> 和丑陋的 <code>&lt;&lt;</code> 拼接。</p>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用 CMake FetchContent 引入 fmt 库</strong><br>打开你的 <code>CMakeLists.txt</code>，在之前引入 <code>googletest</code> 的地方下面，加入这段咒语：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 引入著名的 fmt 格式化库</span></span><br><span class="line">FetchContent_Declare(</span><br><span class="line">  fmt</span><br><span class="line">  URL https://github.com/fmtlib/fmt/archive/refs/tags/<span class="number">10.2</span>.<span class="number">1</span>.zip</span><br><span class="line">)</span><br><span class="line">FetchContent_MakeAvailable(fmt)</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：体验丝滑的现代输出</strong><br>新建 <code>week04/day04.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fmt/core.h&gt;</span> <span class="comment">// 引入 fmt 核心头文件</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fmt/color.h&gt;</span> <span class="comment">// 引入颜色支持！</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OldStyleLog</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 极大概率发生交错乱码</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="string">&quot; is running using old extremely long cout syntax.\n&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ModernLog</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 现代方式：一次性组装，语法清爽</span></span><br><span class="line">    fmt::<span class="built_in">print</span>(<span class="string">&quot;Thread &#123;&#125; is running using modern fmt::print.\n&quot;</span>, id);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::vector&lt;std::thread&gt; threads;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 炫技：打一个带颜色的标题</span></span><br><span class="line">    fmt::<span class="built_in">print</span>(<span class="built_in">fg</span>(fmt::color::cyan) | fmt::emphasis::bold, </span><br><span class="line">               <span class="string">&quot;--- 准备启动多线程压测 ---\n&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; ++i) &#123;</span><br><span class="line">        threads.<span class="built_in">emplace_back</span>(ModernLog, i);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; t : threads) t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 3：配置 CMake 编译目标</strong><br>在 <code>CMakeLists.txt</code> 底部追加：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">add_executable</span>(day04 week04/day04.cpp)</span><br><span class="line"><span class="comment"># 必须链接 fmt 库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(day04 PRIVATE fmt::fmt)</span><br></pre></td></tr></table></figure>
+<p>编译并运行，享受终端里整洁、带有颜色的格式化输出！这为我们下周引入专业的日志库 <code>spdlog</code> 打下了完美的地基。</p>
+<hr>
+<h2 id="Day-5-综合大练兵-写一个线程安全的全局-Cache"><a href="#Day-5-综合大练兵-写一个线程安全的全局-Cache" class="headerlink" title="Day 5: 综合大练兵 (写一个线程安全的全局 Cache)"></a>Day 5: 综合大练兵 (写一个线程安全的全局 Cache)</h2><h3 id="🎯-知识点深度剖析：智能指针与锁的巅峰对决"><a href="#🎯-知识点深度剖析：智能指针与锁的巅峰对决" class="headerlink" title="🎯 知识点深度剖析：智能指针与锁的巅峰对决"></a>🎯 知识点深度剖析：智能指针与锁的巅峰对决</h3><p>今天我们要用这四周学到的所有知识（锁、<code>std::map</code>的危险性、<code>shared_ptr</code>的内存管理），来手写一个面试终极问题：<br><strong>“请实现一个线程安全的全局缓存组件（Cache），要求：读多写少，读取时如果对象存在，需要返回出去给业务方慢慢用，但此时其他线程如果清空了缓存，不能导致业务方奔溃。”</strong></p>
+<p>如果不用智能指针，这个题极其难写（业务方拿着裸指针，缓存被清空时，裸指针立刻变成野指针）。<br>如果用了 <code>shared_ptr</code>，这就是一道送分题。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：编写并发 Cache</strong><br>新建 <code>week04/ConcurrentCache.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ConcurrentCache</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 放入缓存</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Put</span><span class="params">(<span class="type">const</span> std::string&amp; key, <span class="type">const</span> std::string&amp; value)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 创建一块受保护的内存</span></span><br><span class="line">        <span class="keyword">auto</span> data = std::<span class="built_in">make_shared</span>&lt;std::string&gt;(value);</span><br><span class="line">        </span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">        <span class="comment">// 放进 map，这里发生了拷贝，引用计数为 1</span></span><br><span class="line">        cache_[key] = data; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从缓存读取</span></span><br><span class="line">    <span class="comment">// 注意返回值：我们返回的是 shared_ptr 的拷贝！</span></span><br><span class="line">    <span class="function">std::shared_ptr&lt;std::string&gt; <span class="title">Get</span><span class="params">(<span class="type">const</span> std::string&amp; key)</span> </span>&#123;</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">        <span class="keyword">auto</span> it = cache_.<span class="built_in">find</span>(key);</span><br><span class="line">        <span class="keyword">if</span> (it != cache_.<span class="built_in">end</span>()) &#123;</span><br><span class="line">            <span class="comment">// 返回 shared_ptr，此时这块内存的引用计数变成了 2！</span></span><br><span class="line">            <span class="comment">// 极其关键：这样一来，就算出了这个锁的作用域，甚至有别人从 cache 里删了这个 key，</span></span><br><span class="line">            <span class="comment">// 调用者手里依然握着强引用，内存绝对不会被回收！</span></span><br><span class="line">            <span class="keyword">return</span> it-&gt;second; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>; <span class="comment">// 没找到</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移除缓存</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Remove</span><span class="params">(<span class="type">const</span> std::string&amp; key)</span> </span>&#123;</span><br><span class="line">        <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">        <span class="comment">// 从 map 里删掉。该条目的引用计数 -1。</span></span><br><span class="line">        <span class="comment">// 如果这时候没人正在用它，计数归零，立刻释放内存。</span></span><br><span class="line">        <span class="comment">// 如果这时候正有别的线程在读，计数变为 1，内存不会释放，等人家读完析构时自然释放。神来之笔！</span></span><br><span class="line">        cache_.<span class="built_in">erase</span>(key);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::mutex mutex_;</span><br><span class="line">    std::map&lt;std::string, std::shared_ptr&lt;std::string&gt;&gt; cache_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：编写极限验证程序</strong><br>写一个 <code>week04/day05.cpp</code> 测试它。起一个线程不断地 <code>Get</code> 数据并极其缓慢地读取（模拟长业务处理）；起另一个线程疯狂地 <code>Remove</code> 那个正在被读取的 Key。配合 TSan 和 ASan 运行，你将看到系统坚如磐石，没有任何野指针和竞争！</p>
+<p><strong>任务 3：提交你的里程碑</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 04: 跨越并发分水岭，掌握多线程环境下的智能指针(shared_ptr/weak_ptr)生命周期，接入 fmt 库&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这四周我们练了内功。从下周开始，我们要用这些砖块，去盖一座大厦了。下周，我们将手写一个<strong>工业级的高性能线程池（ThreadPool）</strong>，它是所有异步服务的心脏！周末愉快！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li>👉 <strong>Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week03/" rel="prev" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week05/" rel="next" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">
+                  C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

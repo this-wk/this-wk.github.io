@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="来自老工程师的嘱托：欢迎来到这 12 周计划的下半场。前七周我们把“并发计算”和“底层性能”挖了个底朝天。但一个系统不能只是自己一个人在那儿瞎算，它得和外面通信。 讲到 C++ 的网络编程，很多人第一时间想到的是底层的 Socket API（socket, bind, listen, accept, epoll&#x2F;select）。如果你去手写裸 epoll，光是处理“半包&#x2F;粘包”、“非阻">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week08/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="来自老工程师的嘱托：欢迎来到这 12 周计划的下半场。前七周我们把“并发计算”和“底层性能”挖了个底朝天。但一个系统不能只是自己一个人在那儿瞎算，它得和外面通信。 讲到 C++ 的网络编程，很多人第一时间想到的是底层的 Socket API（socket, bind, listen, accept, epoll&#x2F;select）。如果你去手写裸 epoll，光是处理“半包&#x2F;粘包”、“非阻">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:09:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:18:43.970Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week08/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week08/","path":"2026/03/05/cpp11-series/week08/","title":"C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型 | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-Asio-%E7%9A%84%E5%BF%83%E8%84%8F%E2%80%94%E2%80%94io-context-%E4%B8%8E%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF"><span class="nav-number">1.</span> <span class="nav-text">Day 1: Asio 的心脏——io_context 与事件循环</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%98%AF%E8%B0%81%E5%9C%A8%E5%B8%AE%E4%BD%A0%E8%B7%91%E4%BB%A3%E7%A0%81%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：是谁在帮你跑代码？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E5%BC%82%E6%AD%A5%E5%9B%9E%E8%B0%83%E4%B8%8E%E5%AF%B9%E8%B1%A1%E7%9A%84%E7%94%9F%E6%AD%BB%E6%97%B6%E9%80%9F"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 异步回调与对象的生死时速</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%82%AC%E6%8C%82%E5%BC%95%E7%94%A8%E7%9A%84%E5%A4%8D%E4%BB%87"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：悬挂引用的复仇</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-TCP-%E5%9F%BA%E7%A1%80%E2%80%94%E2%80%94Acceptor-%E4%B8%8E-Socket-%E7%9A%84%E5%88%9D%E4%BD%93%E9%AA%8C"><span class="nav-number">3.</span> <span class="nav-text">Day 3: TCP 基础——Acceptor 与 Socket 的初体验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%8E%A5%E5%AE%A2%E4%B8%8E%E6%8F%A1%E6%89%8B"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：接客与握手</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E7%BC%93%E5%86%B2%E5%8C%BA%E4%B8%8E%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%EF%BC%88asio-buffer%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 缓冲区与内存管理（asio::buffer）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%BD%91%E7%BB%9C%E8%AF%BB%E5%86%99%E4%B8%8D%E9%9C%80%E8%A6%81%E5%A4%9A%E4%BD%99%E7%9A%84%E6%8B%B7%E8%B4%9D"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：网络读写不需要多余的拷贝</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E6%A8%A1%E5%9E%8B%E6%80%BB%E7%BB%93%E4%B8%8E%E6%9C%AC%E5%91%A8%E9%AA%8C%E6%94%B6"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 模型总结与本周验收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%E4%B8%8E%E5%BC%82%E6%AD%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%A4%A7%E4%B8%80%E7%BB%9F"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：事件循环与异步机制的大一统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week08/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型 | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:09:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:09:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到这 12 周计划的下半场。前七周我们把“并发计算”和“底层性能”挖了个底朝天。但一个系统不能只是自己一个人在那儿瞎算，它得和外面通信。</p>
+<p>讲到 C++ 的网络编程，很多人第一时间想到的是底层的 Socket API（<code>socket</code>, <code>bind</code>, <code>listen</code>, <code>accept</code>, <code>epoll/select</code>）。<br>如果你去手写裸 <code>epoll</code>，光是处理“半包&#x2F;粘包”、“非阻塞读写产生的 EAGAIN”、“连接的生命周期”就能让你崩溃。</p>
+<p>现代 C++ 后端工程师的标准做法是：站在巨人的肩膀上。<br><strong>Boost.Asio（Asynchronous Input&#x2F;Output）</strong> 是 C++ 工业界最权威、应用最广的异步网络库。它甚至被提议作为未来 C++ 标准库网络部分的基石。</p>
+<p>Asio 很难学，因为它满篇都是回调、异步和难以捉摸的生命周期。但这周，我会带你直接拆解它的核心思维模型。只要你懂了它的模型，所有网络框架对你来说都是透明的。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-Asio-的心脏——io-context-与事件循环"><a href="#Day-1-Asio-的心脏——io-context-与事件循环" class="headerlink" title="Day 1: Asio 的心脏——io_context 与事件循环"></a>Day 1: Asio 的心脏——io_context 与事件循环</h2><h3 id="🎯-知识点深度剖析：是谁在帮你跑代码？"><a href="#🎯-知识点深度剖析：是谁在帮你跑代码？" class="headerlink" title="🎯 知识点深度剖析：是谁在帮你跑代码？"></a>🎯 知识点深度剖析：是谁在帮你跑代码？</h3><p>如果你理解 Node.js 的 Event Loop（事件循环），你就能秒懂 Asio。<br>在 Asio 里，有一个绝对的核心对象叫做 <strong><code>io_context</code></strong>（老版本叫 <code>io_service</code>）。</p>
+<p>你可以把它想象成一个<strong>任务分发中心</strong>。<br>所有的异步操作（比如：“等待 3 秒钟”、“等待网卡收到一个数据包”），你都不会在自己的线程里死等（Block）。<br>你只做一件事：向 <code>io_context</code> 提交一个请求，并且附带一个<strong>回调函数（Handler&#x2F;Lambda）</strong>，说：“老兄，等这事儿办完了，你帮我调用一下这个函数”。然后你就可以去干别的了。</p>
+<p>当你在代码最后调用 <strong><code>io_context.run()</code></strong> 时，奇迹就开始了。<br>这个 <code>run()</code> 函数就是一个死循环！它会去检查有没有事件完成（通过底层的 epoll&#x2F;kqueue），如果有，它就会在这个调用 <code>run()</code> 的线程里，执行你绑定的那个回调函数。<br><strong>极其重要的准则</strong>：如果 <code>io_context</code> 发现现在没有任何待处理的异步任务了，<code>run()</code> 就会立刻返回并退出！你的程序就结束了。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>Boost.Asio 官方 Tutorial</strong>: <a target="_blank" rel="noopener" href="https://www.boost.org/doc/libs/1_82_0/doc/html/boost_asio/tutorial/tuttimer1.html">Timer.1 - Using a timer synchronously</a> 以及 Timer.2。这是最纯正的官方入门。</li>
+<li><strong>理解 Proactor 模式</strong>：Asio 底层使用的是 Proactor 模式（系统帮你把数据读到了内存，再通知你），而 epoll 是 Reactor 模式（系统通知你可以读了，你自己去调用 read 读到内存）。</li>
+</ol>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：在 CMake 中引入 Asio（非 Boost 版本）</strong><br>Boost 库极其庞大，编译太慢。幸好作者把 Asio 剥离出来做成了一个只有头文件的独立库（<strong>Standalone Asio</strong>），完全脱离 Boost！<br>在 <code>CMakeLists.txt</code> 中引入：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 引入独立的 asio (header-only)</span></span><br><span class="line">FetchContent_Declare(</span><br><span class="line">  asio</span><br><span class="line">  URL https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-<span class="number">1</span>-<span class="number">28</span>-<span class="number">0</span>.zip</span><br><span class="line">)</span><br><span class="line">FetchContent_MakeAvailable(asio)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 为了让 asio 以 standalone 模式运行（不依赖 boost），需要加个宏</span></span><br><span class="line"><span class="keyword">add_compile_definitions</span>(ASIO_STANDALONE)</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：编写你的第一个 Asio 定时器程序</strong><br>新建 <code>week08/day01_timer.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asio.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 所有的 Asio 程序都必须有一个 io_context</span></span><br><span class="line">    asio::io_context io;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 创建一个定时器，绑定到 io_context 上，设定 2 秒后触发</span></span><br><span class="line">    <span class="function">asio::steady_timer <span class="title">timer</span><span class="params">(io, std::chrono::seconds(<span class="number">2</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主流程] 提交异步等待请求...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 发起异步等待 (async_wait)，并传入一个 Lambda 作为完成时的回调 (Handler)</span></span><br><span class="line">    <span class="comment">// 此时代码不会阻塞！它会瞬间执行过去！</span></span><br><span class="line">    timer.<span class="built_in">async_wait</span>([](<span class="type">const</span> asio::error_code&amp; error) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!error) &#123;</span><br><span class="line">            std::cout &lt;&lt; <span class="string">&quot;[回调函数] 2秒到了！闹钟响了！&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主流程] 准备进入 io_context.run() 事件循环死等...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 启动事件循环！</span></span><br><span class="line">    <span class="comment">// run() 会阻塞在这里，不断分发事件，直到所有注册的异步任务都执行完毕。</span></span><br><span class="line">    io.<span class="built_in">run</span>();</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主流程] io_context.run() 退出了，程序结束。&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把 <code>day01_timer.cpp</code> 加入 CMake 编译并运行。观察那精准的 2 秒等待，体会控制权在主流程和回调函数之间的转移。</p>
+<hr>
+<h2 id="Day-2-异步回调与对象的生死时速"><a href="#Day-2-异步回调与对象的生死时速" class="headerlink" title="Day 2: 异步回调与对象的生死时速"></a>Day 2: 异步回调与对象的生死时速</h2><h3 id="🎯-知识点深度剖析：悬挂引用的复仇"><a href="#🎯-知识点深度剖析：悬挂引用的复仇" class="headerlink" title="🎯 知识点深度剖析：悬挂引用的复仇"></a>🎯 知识点深度剖析：悬挂引用的复仇</h3><p>在 Week 03 讲 Lambda 的时候，我强调过 <code>[&amp;]</code> 的致命危险。到了 Asio 这里，这个危险被放大了 100 倍。</p>
+<p>假设你在一个类 <code>Session</code> 的成员函数里发起了一个 <code>async_wait</code>，并且你在回调 Lambda 里捕获了 <code>this</code> 指针，想要在事件完成时修改类的成员变量。<br>如果在这个事件完成<strong>之前</strong>（比如定时器还在走，或者网络包还没来），外部把这个 <code>Session</code> 对象 <code>delete</code> 了！<br>当事件终于完成，<code>io_context.run()</code> 欢天喜地地去执行回调函数，一访问 <code>this-&gt;data</code>，<strong>立刻 Segmentation Fault 核心转储！</strong></p>
+<p><strong>Asio 编程第一铁律</strong>：只要你发起了一个异步操作，你必须、绝对、一定要保证，在回调函数被执行完之前，你所访问的对象（无论是业务对象还是缓冲区）<strong>绝对活着</strong>！</p>
+<p>最标准的解法：使用我们 Week 04 学的 <code>std::shared_ptr</code>。在发起异步调用时，把 <code>shared_ptr</code> 通过值捕获 <code>[ptr]</code> 传进回调 Lambda 里。这样只要事件没执行完，Lambda 里的智能指针就能强行给对象续命，保证它不死！</p>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用 shared_ptr 给异步对象续命</strong><br>新建 <code>week08/day02_lifetime.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asio.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Printer</span> : <span class="keyword">public</span> std::enable_shared_from_this&lt;Printer&gt; &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Printer</span>(asio::io_context&amp; io) : <span class="built_in">timer_</span>(io) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Printer 被创建。&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~<span class="built_in">Printer</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Printer 彻底销毁。&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        timer_.<span class="built_in">expires_after</span>(std::chrono::<span class="built_in">seconds</span>(<span class="number">2</span>));</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 极其危险的反面教材：</span></span><br><span class="line">        <span class="comment">// timer_.async_wait([this](const asio::error_code&amp; e)&#123; this-&gt;count_++; &#125;);</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 救命神药：通过 shared_from_this() 获取自身的 shared_ptr，并按值捕获！</span></span><br><span class="line">        <span class="keyword">auto</span> self = <span class="built_in">shared_from_this</span>();</span><br><span class="line">        </span><br><span class="line">        timer_.<span class="built_in">async_wait</span>([self](<span class="type">const</span> asio::error_code&amp; error) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!error) &#123;</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;[异步回调执行] count = &quot;</span> &lt;&lt; ++self-&gt;count_ &lt;&lt; std::endl;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    asio::steady_timer timer_;</span><br><span class="line">    <span class="type">int</span> count_ = <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    asio::io_context io;</span><br><span class="line">    </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 我们在一个局部作用域里创建 Printer</span></span><br><span class="line">        <span class="keyword">auto</span> p = std::<span class="built_in">make_shared</span>&lt;Printer&gt;(io);</span><br><span class="line">        p-&gt;<span class="built_in">Start</span>();</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[主流程] 离开局部作用域，p 准备销毁...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">// 注意：在这里 p 虽然出了作用域，但因为它被 Lambda 捕获了，所以 Printer 并没有被销毁！</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主流程] 启动 run()...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    io.<span class="built_in">run</span>(); <span class="comment">// 事件循环开始，2秒后执行回调，回调执行完，Lambda 销毁，Printer 彻底销毁！</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行它。你可以清晰地看到析构函数是在回调执行完毕之后才被调用的。如果你把捕获 <code>self</code> 改成捕获 <code>this</code> 并在外面销毁对象，程序大概率会立刻崩溃。</p>
+<hr>
+<h2 id="Day-3-TCP-基础——Acceptor-与-Socket-的初体验"><a href="#Day-3-TCP-基础——Acceptor-与-Socket-的初体验" class="headerlink" title="Day 3: TCP 基础——Acceptor 与 Socket 的初体验"></a>Day 3: TCP 基础——Acceptor 与 Socket 的初体验</h2><h3 id="🎯-知识点深度剖析：接客与握手"><a href="#🎯-知识点深度剖析：接客与握手" class="headerlink" title="🎯 知识点深度剖析：接客与握手"></a>🎯 知识点深度剖析：接客与握手</h3><p>我们要正式触碰网络了。<br>TCP 服务器的核心模型有两个主要对象：</p>
+<ol>
+<li><strong><code>ip::tcp::acceptor</code>（迎宾员）</strong>：它绑定在某个端口（比如 8080）上，专门负责等待客户端的连接请求。</li>
+<li><strong><code>ip::tcp::socket</code>（服务员）</strong>：当有客户连进来时，<code>acceptor</code> 就会生成一个新的 <code>socket</code>，专门负责和这个客户进行一对一的读写通信。</li>
+</ol>
+<p>今天我们先不用异步，用最基础的**同步（阻塞）**模型来写一个极简的 Echo（回声）服务器，感受一下 Asio 的接口之美。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：编写同步 Echo 服务器</strong><br>新建 <code>week08/day03_sync_echo.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asio.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> asio::ip::tcp;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 处理单个客户端的会话</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Session</span><span class="params">(tcp::socket sock)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[Session] 客户端连入: &quot;</span> &lt;&lt; sock.<span class="built_in">remote_endpoint</span>().<span class="built_in">address</span>().<span class="built_in">to_string</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        <span class="type">char</span> data[<span class="number">1024</span>];</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">            asio::error_code error;</span><br><span class="line">            <span class="comment">// 阻塞式读取客户端数据</span></span><br><span class="line">            <span class="type">size_t</span> length = sock.<span class="built_in">read_some</span>(asio::<span class="built_in">buffer</span>(data), error);</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> (error == asio::error::eof) &#123;</span><br><span class="line">                std::cout &lt;&lt; <span class="string">&quot;[Session] 客户端主动断开连接。\n&quot;</span>;</span><br><span class="line">                <span class="keyword">break</span>; <span class="comment">// 对方关闭了连接</span></span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (error) &#123;</span><br><span class="line">                <span class="keyword">throw</span> asio::<span class="built_in">system_error</span>(error); <span class="comment">// 其他错误</span></span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 原封不动地发回去 (Echo)</span></span><br><span class="line">            asio::<span class="built_in">write</span>(sock, asio::<span class="built_in">buffer</span>(data, length));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="built_in">catch</span> (std::exception&amp; e) &#123;</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;[Session 异常] &quot;</span> &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        asio::io_context io_context;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 创建 Acceptor，监听 IPv4 的 8080 端口</span></span><br><span class="line">        <span class="function">tcp::acceptor <span class="title">acceptor</span><span class="params">(io_context, tcp::endpoint(tcp::v4(), <span class="number">8080</span>))</span></span>;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Server listening on port 8080...\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 死循环等待客人</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">            <span class="function">tcp::socket <span class="title">socket</span><span class="params">(io_context)</span></span>;</span><br><span class="line">            <span class="comment">// 阻塞在这里，直到有客户端连进来</span></span><br><span class="line">            acceptor.<span class="built_in">accept</span>(socket);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 为这个客户端开一个专线线程去处理 (同步模型的老套路)</span></span><br><span class="line">            std::<span class="built_in">thread</span>(Session, std::<span class="built_in">move</span>(socket)).<span class="built_in">detach</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="built_in">catch</span> (std::exception&amp; e) &#123;</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;Exception: &quot;</span> &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：使用 Telnet 客户端测试</strong><br>编译运行你的服务器程序。<br>打开一个新的终端窗口（如果是 Windows 可以用 PowerShell，如果是 Linux 可以直接敲）：<br>输入：<code>telnet 127.0.0.1 8080</code> （如果没有 telnet，可以使用 <code>nc 127.0.0.1 8080</code>）。<br>连上之后，随便敲几个字符按回车。你会发现服务器把你的字符原封不动地还给了你。<br>恭喜，你已经打通了网络七层模型！</p>
+<hr>
+<h2 id="Day-4-缓冲区与内存管理（asio-buffer）"><a href="#Day-4-缓冲区与内存管理（asio-buffer）" class="headerlink" title="Day 4: 缓冲区与内存管理（asio::buffer）"></a>Day 4: 缓冲区与内存管理（asio::buffer）</h2><h3 id="🎯-知识点深度剖析：网络读写不需要多余的拷贝"><a href="#🎯-知识点深度剖析：网络读写不需要多余的拷贝" class="headerlink" title="🎯 知识点深度剖析：网络读写不需要多余的拷贝"></a>🎯 知识点深度剖析：网络读写不需要多余的拷贝</h3><p>在 C 语言写 Socket 的时候，你调用 <code>read(fd, buf, size)</code>，传的是一个裸指针和大小。<br>在 Asio 里，网络读写接口（如 <code>read_some</code>, <code>async_read</code>, <code>async_write</code>）统统不接受裸指针或容器，它们只接受一个神奇的东西：<strong><code>asio::buffer</code></strong>。</p>
+<p><code>asio::buffer</code> 本质上是一个<strong>极其轻量级的“适配器（Adapter）”</strong>。<br>无论你是有一个 <code>char array[1024]</code>，还是有一个 <code>std::vector&lt;char&gt;</code>，还是有一个 <code>std::string</code>，你都可以把它用 <code>asio::buffer()</code> 包裹起来。<br>它内部仅仅保存了<strong>指向你数据的指针和数据长度</strong>，它<strong>绝对不会拷贝你的数据</strong>！</p>
+<p>这给 C++ 程序员带来了极大的自由和危险：<br><strong>既然 <code>asio::buffer</code> 不拷贝数据，如果在使用它进行异步收发（<code>async_write</code>）的期间，你底层的 <code>std::string</code> 被销毁了或者被改变了，灾难就会发生！</strong></p>
+<h4 id="📚-老兵推荐阅读（理论补强）-1"><a href="#📚-老兵推荐阅读（理论补强）-1" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>Boost.Asio 官方文档</strong>: <a target="_blank" rel="noopener" href="https://www.boost.org/doc/libs/1_82_0/doc/html/boost_asio/overview/core/buffers.html">Buffers</a>。理解 Scatter-Gather（分散-聚集）I&#x2F;O。</li>
+</ol>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：体验 asio::buffer 的包裹魔法</strong><br>新建 <code>week08/day04_buffer.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asio.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">PrintBufferInfo</span><span class="params">(<span class="type">const</span> asio::const_buffer&amp; buf)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// data() 拿到裸指针，size() 拿到长度</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Buffer size: &quot;</span> &lt;&lt; buf.<span class="built_in">size</span>() &lt;&lt; <span class="string">&quot; bytes\n&quot;</span>;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Content: &quot;</span>;</span><br><span class="line">    std::cout.<span class="built_in">write</span>(<span class="built_in">static_cast</span>&lt;<span class="type">const</span> <span class="type">char</span>*&gt;(buf.<span class="built_in">data</span>()), buf.<span class="built_in">size</span>());</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n-------------------\n&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 形式 1：包裹原生数组</span></span><br><span class="line">    <span class="type">char</span> raw_buf[] = <span class="string">&quot;Hello Raw Array&quot;</span>;</span><br><span class="line">    <span class="built_in">PrintBufferInfo</span>(asio::<span class="built_in">buffer</span>(raw_buf));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 形式 2：包裹 std::string (用于发送)</span></span><br><span class="line">    std::string str_buf = <span class="string">&quot;Hello std::string&quot;</span>;</span><br><span class="line">    <span class="built_in">PrintBufferInfo</span>(asio::<span class="built_in">buffer</span>(str_buf));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 形式 3：包裹 std::vector (推荐的二进制数据接收容器)</span></span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; vec_buf&#123;<span class="string">&#x27;H&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;l&#x27;</span>, <span class="string">&#x27;l&#x27;</span>, <span class="string">&#x27;o&#x27;</span>, <span class="string">&#x27; &#x27;</span>, <span class="string">&#x27;V&#x27;</span>, <span class="string">&#x27;e&#x27;</span>, <span class="string">&#x27;c&#x27;</span>&#125;;</span><br><span class="line">    <span class="built_in">PrintBufferInfo</span>(asio::<span class="built_in">buffer</span>(vec_buf));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这代码没有网络连接，只是让你理解 <code>buffer</code> 这个核心组件的用法，它是明天我们要写异步网络服务器的地基。</p>
+<hr>
+<h2 id="Day-5-模型总结与本周验收"><a href="#Day-5-模型总结与本周验收" class="headerlink" title="Day 5: 模型总结与本周验收"></a>Day 5: 模型总结与本周验收</h2><h3 id="🎯-知识点深度剖析：事件循环与异步机制的大一统"><a href="#🎯-知识点深度剖析：事件循环与异步机制的大一统" class="headerlink" title="🎯 知识点深度剖析：事件循环与异步机制的大一统"></a>🎯 知识点深度剖析：事件循环与异步机制的大一统</h3><p>这周我们接触了 Asio 的基石。今天我们不写新代码，而是要把前四天的思维模型融会贯通。<br>如果说过去我们写多线程，是“你主动去干活”；<br>在 Asio 的世界里，就是“你把事情托付给 io_context，然后等它来叫你（好莱坞原则：Don’t call us, we’ll call you）”。</p>
+<p>在真实的异步服务器中：<br>你的 <code>main</code> 函数里只会有一个 <code>io_context</code>。<br>你会挂上一个 <code>acceptor.async_accept</code>（等着接客）。<br>然后你会毫不犹豫地调用 <code>io_context.run()</code> 陷入沉睡。<br>当客人来了，<code>acceptor</code> 的回调被触发，你在回调里创建一个包含着 <code>shared_ptr</code> 的 <code>Connection</code> 对象，给它分配一个 <code>std::vector</code> 的 buffer，然后立刻在这个对象里发起 <code>async_read</code> 听客人说话，同时 <code>acceptor</code> 继续挂上下一次 <code>async_accept</code>。<br>整个服务器就像一台极高效率的流水线，所有事件都是由底层的 <code>epoll</code> 触发，没有一丝一毫因为“死等数据”而导致的资源浪费。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：复盘绘图</strong><br>在你的 <code>week08.md</code> 笔记中，用文字或者简单的流程图，画出一个包含 1 个 <code>io_context</code> 和 1 个 <code>async_wait</code> 定时器的程序，它从启动、注册回调、休眠等待、到被操作系统唤醒执行回调的全生命周期过程。</p>
+<p><strong>任务 2：整理代码并提交</strong><br>确保本周使用独立版 Asio 的代码全部在 CMake 中编译通过。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 08: 跨过门槛，掌握现代网络库 Boost.Asio 的 io_context、事件循环与缓冲区模型&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>下周，是最最激动人心的一周。我们要把本周学的 Asio 模型大爆发，手写一个全异步的、带日志的、支持千万级并发连接的 TCP Echo Server！这是你简历上最有分量的作品底座。周末愉快！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li>👉 <strong>Week 08：网络编程与 Boost.Asio 基础思维模型</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week07/" rel="prev" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week09/" rel="next" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">
+                  C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石) <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

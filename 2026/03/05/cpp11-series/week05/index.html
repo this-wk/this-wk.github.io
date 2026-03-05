@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week05/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:06:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:18:43.935Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week05/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week05/","path":"2026/03/05/cpp11-series/week05/","title":"C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.</span> <span class="nav-text">Day 1: 线程池的核心数据结构设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%BA%BF%E7%A8%8B%E6%B1%A0%E9%87%8C%E5%88%B0%E5%BA%95%E8%A3%85%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：线程池里到底装了什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD%E4%B8%8E%E2%80%9C%E6%AF%92%E4%B8%B8%E2%80%9D%E6%9C%BA%E5%88%B6%EF%BC%88Poison-Pill%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 优雅关闭与“毒丸”机制（Poison Pill）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%80%8E%E4%B9%88%E8%AE%A9%E6%89%93%E5%B7%A5%E4%BA%BA%E5%AE%89%E5%85%A8%E4%B8%8B%E7%8F%AD%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：怎么让打工人安全下班？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-%E4%B8%87%E8%83%BD%E7%9A%84%E4%BB%BB%E5%8A%A1%E6%8F%90%E4%BA%A4%E6%8E%A5%E5%8F%A3-submit-future"><span class="nav-number">3.</span> <span class="nav-text">Day 3: 万能的任务提交接口 (submit -&gt; future)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E7%81%B5%E9%AD%82%E6%89%80%E5%9C%A8"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：线程池的灵魂所在</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E5%BC%95%E5%85%A5%E5%B7%A5%E4%B8%9A%E7%BA%A7%E6%97%A5%E5%BF%97%E5%BA%93-spdlog%EF%BC%8C%E5%AE%9E%E7%8E%B0%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E5%9F%8B%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 引入工业级日志库 spdlog，实现可观测性埋点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%9E%8E%E5%AD%90%E6%91%B8%E8%B1%A1%E4%B8%8E%E4%B8%8A%E5%B8%9D%E8%A7%86%E8%A7%92"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：瞎子摸象与上帝视角</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB"><span class="nav-number">4.1.1.</span> <span class="nav-text">📚 老兵推荐阅读</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E6%9E%81%E9%99%90%E5%8E%8B%E6%B5%8B%E4%B8%8E%E6%9C%AC%E5%91%A8%E9%AA%8C%E6%94%B6"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 极限压测与本周验收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%98%AF%E9%AA%A1%E5%AD%90%E6%98%AF%E9%A9%AC%EF%BC%8C%E6%8B%89%E5%87%BA%E6%9D%A5%E9%81%9B%E9%81%9B"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：是骡子是马，拉出来遛遛</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week05/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:06:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:06:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。</p>
+<p>在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。<br>如果每来一个请求就 <code>std::thread t(...)</code> 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动&#x2F;销毁”上。<br>线程池的哲学是：提前养一批“打工人（Worker Threads）”，让它们排排坐；外面一旦有任务，就扔进“任务队列”；打工人从队列里抢任务干，干完继续等下一个。</p>
+<p>这周，我们将手把手写出一个带有背压控制、支持任意函数签名、能返回 future 结果的现代 C++ 线程池。这也是大厂最硬核的面试题之一。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-线程池的核心数据结构设计"><a href="#Day-1-线程池的核心数据结构设计" class="headerlink" title="Day 1: 线程池的核心数据结构设计"></a>Day 1: 线程池的核心数据结构设计</h2><h3 id="🎯-知识点深度剖析：线程池里到底装了什么？"><a href="#🎯-知识点深度剖析：线程池里到底装了什么？" class="headerlink" title="🎯 知识点深度剖析：线程池里到底装了什么？"></a>🎯 知识点深度剖析：线程池里到底装了什么？</h3><p>一个标准的现代线程池，内部结构极其清爽，主要就三样东西：</p>
+<ol>
+<li><strong>打工人集合</strong>：一个 <code>std::vector&lt;std::thread&gt;</code>，存放真正干活的系统线程。</li>
+<li><strong>任务队列</strong>：一个线程安全的阻塞队列，也就是我们在 Week 02 手写的 <code>BoundedBlockingQueue</code>。</li>
+<li><strong>状态开关</strong>：一个 <code>std::atomic&lt;bool&gt;</code> 或者被锁保护的 <code>bool</code>，用来标记“线程池是否正在关闭”，如果是，就不能再往里塞新任务了。</li>
+</ol>
+<p><strong>难点在于任务队列的类型。</strong><br>业务丢进来的任务可能是 <code>void()</code>，可能是 <code>int(int, int)</code>。为了把它们统一塞进一个队列，我们必须用到 Week 03 Day 4 学过的<strong>类型擦除</strong>：把所有的任务统统包装成 <code>std::function&lt;void()&gt;</code> 丢进队列里。打工人拿出来的时候，直接 <code>task()</code> 执行即可。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《C++ Concurrency in Action》 Chapter 8.1</strong>: <em>A basic thread pool</em>. 看看大师是如何一步步构建线程池的。</li>
+</ol>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：搭建 ThreadPool 的骨架</strong><br>把你 Week 02 写的 <code>BoundedBlockingQueue.h</code> 拷贝到本周目录。<br>新建 <code>week05/ThreadPool.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;atomic&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;BoundedBlockingQueue.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ThreadPool</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 构造函数：指定线程数和任务队列的最大容量（背压防御）</span></span><br><span class="line">    <span class="built_in">ThreadPool</span>(<span class="type">size_t</span> num_threads, <span class="type">size_t</span> max_queue_size)</span><br><span class="line">        : <span class="built_in">tasks_</span>(max_queue_size), <span class="built_in">stop_</span>(<span class="literal">false</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 启动打工人</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; num_threads; ++i) &#123;</span><br><span class="line">            workers_.<span class="built_in">emplace_back</span>([<span class="keyword">this</span>] &#123; <span class="built_in">WorkerLoop</span>(); &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 暂时先留空析构函数</span></span><br><span class="line">    ~<span class="built_in">ThreadPool</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除拷贝和赋值（线程池这么重的资源绝对不能拷贝）</span></span><br><span class="line">    <span class="built_in">ThreadPool</span>(<span class="type">const</span> ThreadPool&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    ThreadPool&amp; <span class="keyword">operator</span>=(<span class="type">const</span> ThreadPool&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 打工人的死循环</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">WorkerLoop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (!stop_) &#123;</span><br><span class="line">            <span class="comment">// 这里我们先随便写点伪代码，明天完善</span></span><br><span class="line">            <span class="comment">// std::function&lt;void()&gt; task = tasks_.Take();</span></span><br><span class="line">            <span class="comment">// task();</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::vector&lt;std::thread&gt; workers_;</span><br><span class="line">    <span class="comment">// 我们的万能任务队列</span></span><br><span class="line">    BoundedBlockingQueue&lt;std::function&lt;<span class="type">void</span>()&gt;&gt; tasks_;</span><br><span class="line">    std::atomic&lt;<span class="type">bool</span>&gt; stop_;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Day-2-优雅关闭与“毒丸”机制（Poison-Pill）"><a href="#Day-2-优雅关闭与“毒丸”机制（Poison-Pill）" class="headerlink" title="Day 2: 优雅关闭与“毒丸”机制（Poison Pill）"></a>Day 2: 优雅关闭与“毒丸”机制（Poison Pill）</h2><h3 id="🎯-知识点深度剖析：怎么让打工人安全下班？"><a href="#🎯-知识点深度剖析：怎么让打工人安全下班？" class="headerlink" title="🎯 知识点深度剖析：怎么让打工人安全下班？"></a>🎯 知识点深度剖析：怎么让打工人安全下班？</h3><p>线程池的关闭是极其凶险的。<br>如果在 <code>~ThreadPool()</code> 里直接粗暴地调用 <code>exit()</code> 或者不管不顾地让主线程结束，那些还在干活的子线程会因为访问了已被销毁的资源而引发惨烈的 <code>Segmentation Fault</code> 甚至 <code>core dumped</code>。</p>
+<p><strong>正确的下班流程（优雅关闭 Graceful Shutdown）：</strong></p>
+<ol>
+<li>把 <code>stop_</code> 标志位置为 <code>true</code>，拒绝外界再投递新任务。</li>
+<li>此时，可能还有一些打工人正在 <code>tasks_.Take()</code> 上呼呼大睡（因为队列是空的）。怎么把它们叫醒？</li>
+<li>**毒丸机制（Poison Pill）**或者利用条件变量的唤醒：我们需要在 <code>BoundedBlockingQueue</code> 中加入一个 <code>Stop()</code> 机制，它能唤醒所有阻塞在 <code>Take()</code> 上的线程，并且让 <code>Take()</code> 知道“不是来活了，而是公司破产了”，从而安全退出循环。</li>
+<li>挨个调用 <code>worker.join()</code>，确保每一个打工人都平安离开大楼，主线程才能销毁自己。</li>
+</ol>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：给你的 BoundedBlockingQueue 加一个 Stop 接口</strong><br>打开 <code>BoundedBlockingQueue.h</code>，增加停止机制：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 private 里增加一个标志</span></span><br><span class="line"><span class="comment">// bool stopped_&#123;false&#125;;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 在 public 增加：</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Stop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    stopped_ = <span class="literal">true</span>;</span><br><span class="line">    not_empty_.<span class="built_in">notify_all</span>(); <span class="comment">// 把所有沉睡的消费者全部叫醒</span></span><br><span class="line">    not_full_.<span class="built_in">notify_all</span>();  <span class="comment">// 把所有被阻塞的生产者也叫醒</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 修改 Take 逻辑，支持安全退出</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">Take</span><span class="params">(T&amp; item)</span> </span>&#123;</span><br><span class="line">    <span class="function">std::unique_lock&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(mutex_)</span></span>;</span><br><span class="line">    <span class="comment">// 等待条件：队列不为空，或者队列已经停止了！</span></span><br><span class="line">    not_empty_.<span class="built_in">wait</span>(lock, [<span class="keyword">this</span>]() &#123; <span class="keyword">return</span> !queue_.<span class="built_in">empty</span>() || stopped_; &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果公司停摆了，且队列里的存货干完了，就返回 false 让打工人下班</span></span><br><span class="line">    <span class="keyword">if</span> (stopped_ &amp;&amp; queue_.<span class="built_in">empty</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>; </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    item = std::<span class="built_in">move</span>(queue_.<span class="built_in">front</span>());</span><br><span class="line">    queue_.<span class="built_in">pop_front</span>();</span><br><span class="line">    not_full_.<span class="built_in">notify_one</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：完善 ThreadPool 的析构与打工人循环</strong><br>回到 <code>ThreadPool.h</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">    ~<span class="built_in">ThreadPool</span>() &#123;</span><br><span class="line">        stop_ = <span class="literal">true</span>;</span><br><span class="line">        tasks_.<span class="built_in">Stop</span>(); <span class="comment">// 通知队列：不用等新活了，赶紧让工人醒来</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (std::thread&amp; worker : workers_) &#123;</span><br><span class="line">            <span class="keyword">if</span> (worker.<span class="built_in">joinable</span>()) &#123;</span><br><span class="line">                worker.<span class="built_in">join</span>(); <span class="comment">// 亲自看着每一个员工安全离开</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[ThreadPool] 所有线程安全退出，资源回收完毕。\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">WorkerLoop</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">            std::function&lt;<span class="type">void</span>()&gt; task;</span><br><span class="line">            <span class="comment">// 尝试拿任务。如果拿不到（返回 false），说明公司倒闭且活干完了</span></span><br><span class="line">            <span class="keyword">if</span> (!tasks_.<span class="built_in">Take</span>(task)) &#123;</span><br><span class="line">                <span class="keyword">break</span>; <span class="comment">// 下班！</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 真正干活！</span></span><br><span class="line">            <span class="built_in">task</span>(); </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Day-3-万能的任务提交接口-submit-future"><a href="#Day-3-万能的任务提交接口-submit-future" class="headerlink" title="Day 3: 万能的任务提交接口 (submit -&gt; future)"></a>Day 3: 万能的任务提交接口 (submit -&gt; future)</h2><h3 id="🎯-知识点深度剖析：线程池的灵魂所在"><a href="#🎯-知识点深度剖析：线程池的灵魂所在" class="headerlink" title="🎯 知识点深度剖析：线程池的灵魂所在"></a>🎯 知识点深度剖析：线程池的灵魂所在</h3><p>第一天我们把所有任务存成了 <code>std::function&lt;void()&gt;</code>。<br>但调用者怎么把 <code>int add(int, int)</code> 投递进去，又怎么拿到那个 <code>int</code> 结果呢？<br>这就是我们在 Week 03 Day 4 辛苦手写的那个 <strong><code>WrapTask</code></strong> 的用武之地。</p>
+<p>我们需要一个模板函数 <code>submit(F&amp;&amp; f, Args&amp;&amp;... args)</code>。<br>它内部使用 <code>std::packaged_task</code> 将你的函数包装起来，榨取出 <code>std::future</code>。然后把这个 task 进一步包装成无参的 <code>std::function&lt;void()&gt;</code> 丢进队列，最后把 <code>future</code> 潇洒地扔给主线程。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：实现终极的 <code>enqueue</code> 方法</strong><br>在 <code>ThreadPool.h</code> 中补充这个大杀器：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdexcept&gt;</span></span></span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 万能提交接口。返回值是一个 future</span></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> F, <span class="keyword">class</span>... Args&gt;</span></span><br><span class="line"><span class="function">    <span class="keyword">auto</span> <span class="title">enqueue</span><span class="params">(F&amp;&amp; f, Args&amp;&amp;... args)</span> </span></span><br><span class="line"><span class="function">        -&gt; std::future&lt;<span class="keyword">typename</span> std::result_of&lt;<span class="title">F</span><span class="params">(Args...)</span>&gt;::type&gt;</span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">using</span> return_type = <span class="keyword">typename</span> std::result_of&lt;<span class="built_in">F</span>(Args...)&gt;::type;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1. 将函数和参数打包</span></span><br><span class="line">        <span class="keyword">auto</span> task = std::make_shared&lt;std::packaged_task&lt;<span class="built_in">return_type</span>()&gt;&gt;(</span><br><span class="line">            std::<span class="built_in">bind</span>(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 获取 future</span></span><br><span class="line">        std::future&lt;return_type&gt; res = task-&gt;<span class="built_in">get_future</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 拦截：如果线程池正在关闭，拒绝接客</span></span><br><span class="line">        <span class="keyword">if</span> (stop_) &#123;</span><br><span class="line">            <span class="keyword">throw</span> std::<span class="built_in">runtime_error</span>(<span class="string">&quot;enqueue on stopped ThreadPool&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4. 将任务塞进无参大铁盒，丢入阻塞队列</span></span><br><span class="line">        <span class="comment">// 这里的 Put 也是需要改成 bool 返回值的版本哦，参考 Day 2</span></span><br><span class="line">        tasks_.<span class="built_in">Put</span>([task]() &#123; (*task)(); &#125;);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> res; <span class="comment">// 返回给用户</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Day-4-引入工业级日志库-spdlog，实现可观测性埋点"><a href="#Day-4-引入工业级日志库-spdlog，实现可观测性埋点" class="headerlink" title="Day 4: 引入工业级日志库 spdlog，实现可观测性埋点"></a>Day 4: 引入工业级日志库 spdlog，实现可观测性埋点</h2><h3 id="🎯-知识点深度剖析：瞎子摸象与上帝视角"><a href="#🎯-知识点深度剖析：瞎子摸象与上帝视角" class="headerlink" title="🎯 知识点深度剖析：瞎子摸象与上帝视角"></a>🎯 知识点深度剖析：瞎子摸象与上帝视角</h3><p>现在你的线程池已经能跑了。但在生产环境中，如果系统变卡，你怎么知道是为什么？<br>是任务太多把队列塞满了触发了背压？还是打工人都卡在某个慢查询上了？<br>你需要给线程池加上**“可观测性（Observability）”**埋点。</p>
+<p>我们将引入 C++ 工业界最快、最著名、且<strong>绝对线程安全</strong>的日志库：<strong><code>spdlog</code></strong>。<br>它内部极其精巧地使用了无锁队列或微小锁粒度，让你在多线程狂暴打印时既不交错乱码，也不拖慢业务性能。</p>
+<h4 id="📚-老兵推荐阅读"><a href="#📚-老兵推荐阅读" class="headerlink" title="📚 老兵推荐阅读"></a>📚 老兵推荐阅读</h4><ol>
+<li><strong>GitHub <code>gabime/spdlog</code> 官方 Wiki</strong>: 了解它是如何做到异步写入极致性能的。</li>
+</ol>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：通过 CMake 引入 spdlog</strong><br>在 <code>CMakeLists.txt</code> 里追加：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FetchContent_Declare(</span><br><span class="line">  spdlog</span><br><span class="line">  URL https://github.com/gabime/spdlog/archive/refs/tags/v1.<span class="number">13.0</span>.zip</span><br><span class="line">)</span><br><span class="line">FetchContent_MakeAvailable(spdlog)</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：给线程池加上极其专业的上帝之眼</strong><br>修改 <code>ThreadPool.h</code>，引入 <code>&lt;spdlog/spdlog.h&gt;</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">~<span class="built_in">ThreadPool</span>() &#123;</span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;[ThreadPool] 收到关闭信号，准备清退 &#123;&#125; 个工人...&quot;</span>, workers_.<span class="built_in">size</span>());</span><br><span class="line">    <span class="comment">// ... (前面的关闭逻辑)</span></span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;[ThreadPool] 安全销毁完毕。&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> F, <span class="keyword">class</span>... Args&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">enqueue</span><span class="params">(F&amp;&amp; f, Args&amp;&amp;... args)</span> -&gt; ... </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    spdlog::<span class="built_in">debug</span>(<span class="string">&quot;[ThreadPool] 收到新任务。当前队列排队数: &#123;&#125;&quot;</span>, tasks_.<span class="built_in">Size</span>());</span><br><span class="line">    tasks_.<span class="built_in">Put</span>([task]() &#123; </span><br><span class="line">        <span class="comment">// 甚至可以在执行前后打点耗时，这里就不展开了</span></span><br><span class="line">        (*task)(); </span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Day-5-极限压测与本周验收"><a href="#Day-5-极限压测与本周验收" class="headerlink" title="Day 5: 极限压测与本周验收"></a>Day 5: 极限压测与本周验收</h2><h3 id="🎯-知识点深度剖析：是骡子是马，拉出来遛遛"><a href="#🎯-知识点深度剖析：是骡子是马，拉出来遛遛" class="headerlink" title="🎯 知识点深度剖析：是骡子是马，拉出来遛遛"></a>🎯 知识点深度剖析：是骡子是马，拉出来遛遛</h3><p>一个没有经过极限压测的并发组件，就是一颗定时炸弹。今天我们要向你手写的这台机器发起猛烈的攻击：<br>开 100 个外部线程，疯狂向这个只有 4 个打工人、队列容量只有 1000 的线程池里投递 10 万个复杂计算任务，同时监控它的内存是否泄漏，是否死锁。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：编写压测代码</strong><br>新建 <code>week05/day05_benchmark.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;spdlog/spdlog.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ThreadPool.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 模拟一个耗时的业务逻辑</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">HeavyWork</span><span class="params">(<span class="type">int</span> id)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; ++i) sum += (i % <span class="number">2</span>);</span><br><span class="line">    <span class="comment">// 偶尔打印一下，证明有人在干活</span></span><br><span class="line">    <span class="keyword">if</span> (id % <span class="number">10000</span> == <span class="number">0</span>) &#123;</span><br><span class="line">        spdlog::<span class="built_in">info</span>(<span class="string">&quot;Task &#123;&#125; is processing...&quot;</span>, id);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> sum + id;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    spdlog::<span class="built_in">set_level</span>(spdlog::level::info); <span class="comment">// 屏蔽 debug 日志以提高压测性能</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4个工人，队列最多积压 1000 个任务（背压生效）</span></span><br><span class="line">    <span class="function">ThreadPool <span class="title">pool</span><span class="params">(<span class="number">4</span>, <span class="number">1000</span>)</span></span>;</span><br><span class="line">    </span><br><span class="line">    std::vector&lt;std::future&lt;<span class="type">int</span>&gt;&gt; results;</span><br><span class="line">    </span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;--- 开始狂暴投递 100,000 个任务 ---&quot;</span>);</span><br><span class="line">    <span class="keyword">auto</span> start_time = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; ++i) &#123;</span><br><span class="line">        <span class="comment">// 由于队列容量只有 1000，当主线程投递太快时，</span></span><br><span class="line">        <span class="comment">// 这里的 enqueue (底层的 Put) 会被 BoundedBlockingQueue 的 not_full_ 阻塞！</span></span><br><span class="line">        <span class="comment">// 这就是极其完美的背压防御！</span></span><br><span class="line">        results.<span class="built_in">push_back</span>(pool.<span class="built_in">enqueue</span>(HeavyWork, i));</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;投递完毕。开始等待所有结果...&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="type">long</span> <span class="type">long</span> total_sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; fut : results) &#123;</span><br><span class="line">        total_sum += fut.<span class="built_in">get</span>(); <span class="comment">// 阻塞获取结果</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">auto</span> end_time = std::chrono::high_resolution_clock::<span class="built_in">now</span>();</span><br><span class="line">    std::chrono::duration&lt;<span class="type">double</span>&gt; diff = end_time - start_time;</span><br><span class="line">    </span><br><span class="line">    spdlog::<span class="built_in">info</span>(<span class="string">&quot;压测通过！总耗时: &#123;:.2f&#125; 秒。计算特征值: &#123;&#125;&quot;</span>, diff.<span class="built_in">count</span>(), total_sum);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：联合 ASan 与 TSan 的终极验证</strong><br>在 <code>CMakeLists.txt</code> 中：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">add_executable</span>(day05_benchmark week05/day05_benchmark.cpp)</span><br><span class="line"><span class="keyword">target_link_libraries</span>(day05_benchmark PRIVATE spdlog::spdlog)</span><br><span class="line"><span class="comment"># 请务必分别开启 ASan (测内存泄漏) 和 TSan (测死锁/竞争) 各跑一遍！</span></span><br><span class="line"><span class="keyword">target_compile_options</span>(day05_benchmark PRIVATE -fsanitize=thread -g -O2)</span><br><span class="line"><span class="keyword">target_link_options</span>(day05_benchmark PRIVATE -fsanitize=thread)</span><br></pre></td></tr></table></figure>
+<p>编译运行，欣赏终端里飞速滚动的精美日志和完美的执行结果。</p>
+<p><strong>任务 3：提交你的杰作</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 05: 登峰造极，手撕支持 future、背压防御与 spdlog 观测的工业级 ThreadPool&quot;</span></span><br></pre></td></tr></table></figure>
+<p>这个 <code>ThreadPool.h</code> 值得你珍藏在你的 GitHub 里。下周，我们将沉下心来，探索 C++ 并发最底层的魔法：<code>std::atomic</code> 和无锁编程初步。周末痛快玩吧！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li>👉 <strong>Week 05：工业级线程池手写实战（ThreadPool）</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week04/" rel="prev" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week06/" rel="next" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">
+                  C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
