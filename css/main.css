@@ -2486,95 +2486,80 @@ header.header {
   }
 }
 body {
-  background: #fff;
-  color: #333;
-  font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif;
+  background: #f4f6f9;
+  font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 .post-block,
-.sidebar,
+.sidebar-inner,
 .header-inner,
-.sidebar-inner {
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+.comments,
+.menu {
+  background: #fff;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05) !important;
+  transition: all 0.3s ease;
 }
-.header-inner {
-  background: transparent;
+.post-block:hover,
+.sidebar-inner:hover {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+  transform: translateY(-2px);
 }
 .site-author-image {
-  border: none !important;
-  padding: 0 !important;
-  max-width: 150px;
+  border: 4px solid #fff !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  max-width: 120px !important;
   border-radius: 50% !important;
+  transition: transform 0.6s ease;
 }
-a,
-span.exturl {
-  color: #0275d8;
-  border-bottom: none;
-}
-a:hover,
-span.exturl:hover {
-  color: #014c8c;
-  text-decoration: underline;
+.site-author-image:hover {
+  transform: rotate(360deg);
 }
 .site-title {
-  color: #333;
   font-weight: 700;
-}
-.site-subtitle {
-  color: #777;
-}
-.posts-expand {
-  padding-top: 20px;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: #333;
-  font-weight: bold;
-}
-.menu {
-  background: transparent;
+  font-size: 1.6em;
+  color: #2c3e50;
+  letter-spacing: 1px;
 }
 .menu-item a {
-  background: transparent !important;
-  color: #666;
+  border-radius: 8px;
+  transition: background-color 0.2s;
 }
 .menu-item a:hover {
-  color: #333;
-  background: transparent !important;
+  background-color: #f0f4f8 !important;
+  color: #3498db !important;
 }
-.back-to-top {
-  background: transparent;
-  color: #999;
+.tag-cloud-tags a,
+.category-all-page .category-list-item a {
+  display: inline-block;
+  padding: 6px 14px;
+  margin: 6px;
+  background: #e8f4fd;
+  color: #2980b9 !important;
+  border-radius: 20px;
+  font-size: 14px !important;
+  transition: all 0.3s;
+  text-decoration: none;
+  border-bottom: none !important;
 }
-body {
-  background: #fff !important;
+.tag-cloud-tags a:hover,
+.category-all-page .category-list-item a:hover {
+  background: #3498db;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(52,152,219,0.4);
+  transform: translateY(-2px);
 }
-.main-inner {
-  box-shadow: none !important;
-  background: transparent !important;
+.post-title {
+  font-weight: 700;
 }
-.content-wrap {
-  background: transparent !important;
-  box-shadow: none !important;
+.post-title-link::before {
+  background-color: #3498db;
 }
-.header {
-  background: transparent !important;
-  box-shadow: none !important;
+.post-body a {
+  color: #3498db;
+  border-bottom: 1px solid rgba(52,152,219,0.3);
 }
-html,
-body,
-.container,
-.headband {
-  background: #fff !important;
-  box-shadow: none !important;
-}
-.headband {
-  display: none !important;
+.post-body a:hover {
+  border-bottom-color: #3498db;
 }
 .cpp11-series-wrapper {
   background-color: #fafbfc;
@@ -2582,7 +2567,7 @@ body,
   border-radius: 12px;
   padding: 30px 40px;
   margin-top: 20px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
   font-family: "Cascadia Code", "Fira Code", "Consolas", monospace, "Microsoft YaHei";
 }
 .cpp11-series-wrapper h2,
@@ -2612,7 +2597,6 @@ body,
   box-shadow: 0 4px 10px rgba(41,128,185,0.3);
   letter-spacing: 1px;
 }
-/* �ײ������������� */
 .cpp11-series-wrapper ul {
   background: #fff;
   padding: 20px 20px 20px 40px;
