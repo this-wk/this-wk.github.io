@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：过去两周我们一直在底层打转（锁、条件变量、队列），这些东西很强大，但写起来非常“重”。 想象一个最常见的业务场景：你在主线程需要调用一个耗时的算法或者发起一个网络请求，你不想阻塞主线程，于是你起了一个子线程去跑。跑完之后，你该怎么把结果拿回来？ 在老派 C++ 里，这简直是一场灾难：你要在外面定义一个全局变量（或者传一个指针进去），配上一把">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week03/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：过去两周我们一直在底层打转（锁、条件变量、队列），这些东西很强大，但写起来非常“重”。 想象一个最常见的业务场景：你在主线程需要调用一个耗时的算法或者发起一个网络请求，你不想阻塞主线程，于是你起了一个子线程去跑。跑完之后，你该怎么把结果拿回来？ 在老派 C++ 里，这简直是一场灾难：你要在外面定义一个全局变量（或者传一个指针进去），配上一把">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:04:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:16:04.759Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week03/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week03/","path":"2026/03/05/cpp11-series/week03/","title":"C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-%E5%BC%82%E6%AD%A5%E6%9C%9F%E6%9C%9B-future-%E4%B8%8E-promise-%E7%9A%84%E5%A5%91%E7%BA%A6"><span class="nav-number">1.</span> <span class="nav-text">Day 1: 异步期望 (future 与 promise 的契约)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E5%8D%95%E5%90%91%E7%9A%84%E6%95%B0%E6%8D%AE%E4%BF%A1%E9%81%93"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：单向的数据信道</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E4%BB%BB%E5%8A%A1%E6%89%93%E5%8C%85-packaged-task-%E9%99%8D%E7%BB%B4%E6%89%93%E5%87%BB"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 任务打包 (packaged_task 降维打击)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E8%BF%9E-promise-%E9%83%BD%E4%B8%8D%E7%94%A8%E8%87%AA%E5%B7%B1%E5%86%99%E4%BA%86"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：连 promise 都不用自己写了</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-1"><span class="nav-number">2.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-1"><span class="nav-number">2.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-Lambda-%E4%B8%8E%E9%97%AD%E5%8C%85%E9%99%B7%E9%98%B1%EF%BC%88Dangling-References-%E6%82%AC%E5%9E%82%E5%BC%95%E7%94%A8%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">Day 3: Lambda 与闭包陷阱（Dangling References 悬垂引用）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9AC-%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E5%A4%B4%E5%8F%B7%E6%9D%80%E6%89%8B"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：C++ 程序员的头号杀手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-2"><span class="nav-number">3.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-2"><span class="nav-number">3.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E5%87%BD%E6%95%B0%E5%AF%B9%E8%B1%A1%E5%8C%85%E8%A3%85-std-function-%E4%B8%8E-%E7%B1%BB%E5%9E%8B%E6%93%A6%E9%99%A4"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 函数对象包装 (std::function 与 类型擦除)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E6%80%8E%E4%B9%88%E6%8A%8A%E6%89%80%E6%9C%89%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%87%BD%E6%95%B0%E5%A1%9E%E8%BF%9B%E5%90%8C%E4%B8%80%E4%B8%AA%E9%98%9F%E5%88%97%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：怎么把所有类型的函数塞进同一个队列？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-3"><span class="nav-number">4.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-3"><span class="nav-number">4.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E5%BC%82%E5%B8%B8%E7%9A%84%E8%B7%A8%E7%BA%BF%E7%A8%8B%E4%BC%A0%E6%92%AD%E4%B8%8E%E6%9C%AC%E5%91%A8%E9%AA%8C%E6%94%B6"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 异常的跨线程传播与本周验收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E5%BD%93%E5%AD%90%E7%BA%BF%E7%A8%8B%E7%82%B8%E4%BA%86%EF%BC%8C%E4%B8%BB%E7%BA%BF%E7%A8%8B%E6%80%8E%E4%B9%88%E6%B4%BB%E4%B8%8B%E6%9D%A5%EF%BC%9F"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：当子线程炸了，主线程怎么活下来？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%86-%E5%AD%A6%E5%88%B0%E4%BB%80%E4%B9%88%E6%B0%B4%E5%B9%B3%E6%89%8D%E7%AE%97%E9%80%9A%E5%85%B3%EF%BC%9F-4"><span class="nav-number">5.2.</span> <span class="nav-text">🏆 学到什么水平才算通关？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.3.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.4.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week03/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:04:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:04:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>过去两周我们一直在底层打转（锁、条件变量、队列），这些东西很强大，但写起来非常“重”。</p>
+<p>想象一个最常见的业务场景：你在主线程需要调用一个耗时的算法或者发起一个网络请求，你不想阻塞主线程，于是你起了一个子线程去跑。跑完之后，你<strong>该怎么把结果拿回来</strong>？</p>
+<p>在老派 C++ 里，这简直是一场灾难：你要在外面定义一个全局变量（或者传一个指针进去），配上一把 <code>mutex</code>，再配上一个 <code>condition_variable</code>。子线程算完把结果写进变量，然后 <code>notify</code>；主线程在外面 <code>wait</code>，醒了再去读。写这几十行破代码，仅仅是为了拿一个 <code>int</code> 类型的返回值！</p>
+<p>时代变了。C++11 引入了高级异步设施 <code>std::future</code>，配合现代 C++ 的灵魂——Lambda 表达式，我们能像写单线程代码一样，极其优雅地处理多线程的返回值和异常。</p>
+<p>本周的知识极其关键，因为在 Week 05 写“线程池”时，我们的线程池必须能够接收任意函数，并向用户返回一个代表未来结果的 <code>future</code>。今天，我们来打通这任督二脉。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-异步期望-future-与-promise-的契约"><a href="#Day-1-异步期望-future-与-promise-的契约" class="headerlink" title="Day 1: 异步期望 (future 与 promise 的契约)"></a>Day 1: 异步期望 (future 与 promise 的契约)</h2><h3 id="🎯-知识点深度剖析：单向的数据信道"><a href="#🎯-知识点深度剖析：单向的数据信道" class="headerlink" title="🎯 知识点深度剖析：单向的数据信道"></a>🎯 知识点深度剖析：单向的数据信道</h3><p>把 <code>std::promise</code> 和 <code>std::future</code> 想象成一根<strong>单向的管道</strong>（底层称之为 Shared State 共享状态）。</p>
+<ul>
+<li><strong><code>std::promise</code> 是发送端</strong>：你把它交给干活的子线程。子线程算完后，调用 <code>promise.set_value(结果)</code>。</li>
+<li><strong><code>std::future</code> 是接收端</strong>：主线程自己留着。主线程调用 <code>future.get()</code>。<ul>
+<li>如果这时候子线程还没算完，<code>get()</code> 会自动阻塞（就像条件变量的 wait 一样），让出 CPU。</li>
+<li>如果子线程算完了，<code>get()</code> 会立刻拿到结果并往下走。</li>
+</ul>
+</li>
+</ul>
+<p><strong>⚠️ 老兵血泪教训（面试必考坑点）</strong>：</p>
+<ol>
+<li><code>future::get()</code> <strong>只能调用一次</strong>！它的底层设计是转移语义（Move），一旦你 <code>get()</code> 到了数据，这个 <code>future</code> 里的共享状态就被销毁了。如果你手贱写了两次 <code>get()</code>，第二次程序会直接抛出异常（或者产生未定义行为）。如果真的需要多个线程同时等同一个结果，请使用 <code>std::shared_future</code>。</li>
+<li><code>promise</code> 是不能拷贝的，你必须用 <code>std::move</code> 把它的所有权转移给子线程。</li>
+</ol>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《C++ Concurrency in Action》 Chapter 4.2.1-4.2.3</strong>：系统学习 future 和 promise 的运转机制。重点看书里画的那个“通信通道”的图，理解 Shared State 在堆上是如何被 promise 和 future 共同引用的。</li>
+<li><strong>cppreference</strong>：查阅 <code>std::future_errc</code>，看看不正确使用 future 会抛出哪些错误（比如 <code>promise_already_satisfied</code>）。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？"><a href="#🏆-学到什么水平才算通关？" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>彻底抛弃为了“拿子线程结果”而手写 <code>mutex</code> 和 <code>condition_variable</code> 的做法。熟练运用 <code>promise</code> 和 <code>future</code> 建立跨线程的数据桥梁。</p>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用旧时代的土办法拿结果（反面教材）</strong><br>先在脑子里想一下，如果没有 future，你怎么拿结果？是不是得搞个共享的 <code>int result;</code> 和 <code>bool ready = false;</code>？这就需要锁。</p>
+<p><strong>任务 2：用现代手法优雅地取回结果</strong><br>新建 <code>week03/day01.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 子线程函数：注意这里接收的是右值引用，因为 promise 不能被拷贝</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">CalculateSum</span><span class="params">(std::promise&lt;<span class="type">int</span>&gt;&amp;&amp; p, <span class="type">int</span> n)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[子线程] 开始埋头苦干...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="type">int</span> sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt;= n; ++i) &#123;</span><br><span class="line">        sum += i;</span><br><span class="line">        <span class="comment">// 模拟极其耗时的计算</span></span><br><span class="line">        std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">10</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[子线程] 算完了！通过 promise 履行契约发送结果。&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="comment">// 将结果放入信道</span></span><br><span class="line">    p.<span class="built_in">set_value</span>(sum); </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 创建一根管道</span></span><br><span class="line">    std::promise&lt;<span class="type">int</span>&gt; my_promise;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 从管道上拔下接收端 (future) 留在主线程</span></span><br><span class="line">    std::future&lt;<span class="type">int</span>&gt; my_future = my_promise.<span class="built_in">get_future</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 把发送端 (promise) 强行 move 给子线程</span></span><br><span class="line">    <span class="function">std::thread <span class="title">t</span><span class="params">(CalculateSum, std::move(my_promise), <span class="number">100</span>)</span></span>;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] 任务已经交出去了，我可以干点别的事...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">200</span>));</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] 现在我需要那个结果，调用 get() 阻塞等待...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 拿结果。如果子线程没算完，这里会死等。如果算完了，秒回。</span></span><br><span class="line">    <span class="type">int</span> result = my_future.<span class="built_in">get</span>(); </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] 拿到最终结果: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 警告：这里千万不能再调一次 my_future.get()，否则立刻抛出 std::future_error！</span></span><br><span class="line">    </span><br><span class="line">    t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把 <code>day01.cpp</code> 加入 CMake 编译并运行，体会这种解耦带来的清爽感。</p>
+<hr>
+<h2 id="Day-2-任务打包-packaged-task-降维打击"><a href="#Day-2-任务打包-packaged-task-降维打击" class="headerlink" title="Day 2: 任务打包 (packaged_task 降维打击)"></a>Day 2: 任务打包 (packaged_task 降维打击)</h2><h3 id="🎯-知识点深度剖析：连-promise-都不用自己写了"><a href="#🎯-知识点深度剖析：连-promise-都不用自己写了" class="headerlink" title="🎯 知识点深度剖析：连 promise 都不用自己写了"></a>🎯 知识点深度剖析：连 promise 都不用自己写了</h3><p>昨天我们发现，虽然 <code>promise</code> 很好用，但如果我们有一个已经写好的纯粹的业务函数 <code>int ComputeData(int a)</code>，为了把它放进多线程，我们还得去改这个函数的签名，让它强行塞入一个 <code>std::promise&lt;int&gt;&amp;&amp;</code> 参数，在结尾加一句 <code>p.set_value()</code>。<br>这种**“业务代码被多线程逻辑污染”**的做法，在架构上是丑陋的。</p>
+<p>C++ 提供了进一步的降维打击武器：<code>std::packaged_task</code>。<br>它是一个极其聪明的包装器。你只要把任何一个普通函数丢给它，它在内部会自动帮你生成一个 <code>promise</code>，并且<strong>拦截这个普通函数的 <code>return</code> 值</strong>，自动帮你调用 <code>set_value()</code>！<br>也就是说，被调用的业务函数根本不知道自己在多线程环境里运行，它还是该怎么 <code>return</code> 就怎么 <code>return</code>。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）-1"><a href="#📚-老兵推荐阅读（理论补强）-1" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《C++ Concurrency in Action》 Chapter 4.2.4</strong>：Saving a task for the future (使用 <code>std::packaged_task</code>)。</li>
+<li><strong>底层原理思考</strong>：<code>packaged_task</code> 和 <code>function</code> 很像，都是一种“类型擦除（Type Erasure）”技术。但 <code>packaged_task</code> 只能 move 不能 copy，因为内部绑定了不可拷贝的 promise 状态。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-1"><a href="#🏆-学到什么水平才算通关？-1" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>深刻理解 <code>packaged_task</code> 的模板签名语法 <code>std::packaged_task&lt;返回类型(参数类型)&gt;</code>。能熟练地把现存的普通函数包装成可提取 future 的异步任务。</p>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用 packaged_task 包装普通函数</strong><br>新建 <code>week03/day02.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 这是一个极其纯粹的业务函数，没有任何多线程和 promise 的痕迹</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">PureBusinessLogic</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;  [Task] Executing &quot;</span> &lt;&lt; a &lt;&lt; <span class="string">&quot; + &quot;</span> &lt;&lt; b &lt;&lt; <span class="string">&quot; in background...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">seconds</span>(<span class="number">1</span>));</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 声明包装器：签名必须与被包装函数一致 (返回 int，接受两个 int)</span></span><br><span class="line">    <span class="function">std::packaged_task&lt;<span class="title">int</span><span class="params">(<span class="type">int</span>, <span class="type">int</span>)</span>&gt; <span class="title">task</span><span class="params">(PureBusinessLogic)</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 从任务中直接榨取出 future！</span></span><br><span class="line">    std::future&lt;<span class="type">int</span>&gt; fut = task.<span class="built_in">get_future</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 把这个包装好的任务丢给一个新线程去跑。</span></span><br><span class="line">    <span class="comment">// 注意：task 必须 std::move，因为里面有 promise 状态；同时要把参数 (10, 20) 传进去</span></span><br><span class="line">    <span class="function">std::thread <span class="title">t</span><span class="params">(std::move(task), <span class="number">10</span>, <span class="number">20</span>)</span></span>;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[Main] Task submitted.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 获取被拦截的返回值</span></span><br><span class="line">    <span class="type">int</span> res = fut.<span class="built_in">get</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[Main] Result intercepted: &quot;</span> &lt;&lt; res &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    t.<span class="built_in">join</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行观察。你发现了吗？多线程的恶心逻辑全被 <code>packaged_task</code> 吸走了，业务函数保持了极致的干净。</p>
+<hr>
+<h2 id="Day-3-Lambda-与闭包陷阱（Dangling-References-悬垂引用）"><a href="#Day-3-Lambda-与闭包陷阱（Dangling-References-悬垂引用）" class="headerlink" title="Day 3: Lambda 与闭包陷阱（Dangling References 悬垂引用）"></a>Day 3: Lambda 与闭包陷阱（Dangling References 悬垂引用）</h2><h3 id="🎯-知识点深度剖析：C-程序员的头号杀手"><a href="#🎯-知识点深度剖析：C-程序员的头号杀手" class="headerlink" title="🎯 知识点深度剖析：C++ 程序员的头号杀手"></a>🎯 知识点深度剖析：C++ 程序员的头号杀手</h3><p>C++11 引入了 Lambda 表达式，它极其方便，让我们可以把一小段逻辑直接塞给子线程。<br>Lambda 表达式的本质，是编译器在底层帮你生成了一个匿名的、重载了 <code>operator()</code> 的类。中括号 <code>[]</code> 里的捕获列表，其实就是这个匿名类的成员变量。</p>
+<p><strong>致命陷阱来了：</strong><br>如果你写了 <code>[&amp;]</code>（按引用捕获所有局部变量），或者 <code>[&amp;name]</code>。<br>这意味着，Lambda 对象内部仅仅保存了一个底层指针，指向了当前栈帧（Stack Frame）里的那个局部变量。<br>如果你把这个 Lambda 扔给了一个子线程，主线程的函数立刻执行完毕返回，主线程的栈帧被销毁（Pop），局部变量随之灰飞烟灭。<br>而此时，子线程里的 Lambda 还在吭哧吭哧运行，当它通过引用去读取那个变量时——<strong>恭喜你，读取了被释放的栈内存，野引用（Dangling Reference）引发段错误崩溃！</strong></p>
+<h4 id="📚-老兵推荐阅读（理论补强）-2"><a href="#📚-老兵推荐阅读（理论补强）-2" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 31</strong>: <em>Avoid default capture modes</em>. （神作！极其详尽地解释了为什么 <code>[&amp;]</code> 会导致悬垂引用，甚至连 <code>[=]</code> 都有可能因为隐式捕获了 <code>this</code> 指针而导致类被销毁后的悬垂指针，建议逐字研读）。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-2"><a href="#🏆-学到什么水平才算通关？-2" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>在多线程、异步回调的环境下，<strong>严禁使用 <code>[&amp;]</code> 捕获局部变量</strong>。永远、始终、必须明确地按值拷贝 <code>[=]</code>，或者显式指定要拷贝的变量。如果变量太大不能拷贝，用智能指针包裹后移动捕获 <code>[ptr = std::move(ptr)]</code>（这是 C++14 的语法，C++11 可以用 bind 或结构体过渡）。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：制造一场惨烈的悬垂引用崩溃</strong><br>新建 <code>week03/day03.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line">std::thread g_thread;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FireAndForgetBadly</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 这是一个位于函数局部栈上的变量</span></span><br><span class="line">    std::string local_str = <span class="string">&quot;这是一个极其重要的用户订单数据，绝对不能丢！&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 危险：使用 [&amp;] 或者 [&amp;local_str] 按引用捕获！</span></span><br><span class="line">    g_thread = std::<span class="built_in">thread</span>([&amp;local_str]() &#123;</span><br><span class="line">        <span class="comment">// 故意睡一会，保证外面的 FireAndForgetBadly 函数先执行完毕退出</span></span><br><span class="line">        std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">500</span>));</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 灾难发生：试图访问已经被销毁的栈内存！</span></span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[后台线程] 尝试读取数据: &quot;</span> &lt;&lt; local_str &lt;&lt; std::endl;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主函数] FireAndForgetBadly 执行完毕，局部变量 local_str 即将被销毁！&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">FireAndForgetBadly</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 主线程等一会，给后台线程充分的崩溃时间</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">seconds</span>(<span class="number">1</span>));</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(g_thread.<span class="built_in">joinable</span>()) g_thread.<span class="built_in">join</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Done.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：用 ASan 抓捕元凶并修复</strong><br>将目标加入 CMake，并挂载 <code>-fsanitize=address</code>。<br>运行它！<br><strong>屏幕现象</strong>：大概率打印出类似乱码的内容，如果你开了 ASan，会直接抛出极其恐怖的红字：<code>ERROR: AddressSanitizer: stack-use-after-scope</code>（使用了退出作用域后的栈内存）！</p>
+<p><strong>修复它</strong>：<br>把 <code>[&amp;local_str]</code> 改成 <code>[local_str]</code>（按值拷贝）。<br>这会触发一次字符串的拷贝构造，当子线程运行时，它拥有的是自己那份独立的数据副本。再次运行，一切安好。<br><em>（记住这个血的教训。在异步编程里，不知道如何处理生命周期时，宁可多一次拷贝，也绝对不要传引用。）</em></p>
+<hr>
+<h2 id="Day-4-函数对象包装-std-function-与-类型擦除"><a href="#Day-4-函数对象包装-std-function-与-类型擦除" class="headerlink" title="Day 4: 函数对象包装 (std::function 与 类型擦除)"></a>Day 4: 函数对象包装 (std::function 与 类型擦除)</h2><h3 id="🎯-知识点深度剖析：怎么把所有类型的函数塞进同一个队列？"><a href="#🎯-知识点深度剖析：怎么把所有类型的函数塞进同一个队列？" class="headerlink" title="🎯 知识点深度剖析：怎么把所有类型的函数塞进同一个队列？"></a>🎯 知识点深度剖析：怎么把所有类型的函数塞进同一个队列？</h3><p>回顾我们的最终目标：在 Week 05 写一个线程池。<br>线程池内部必须要有一个队列（我们上周写的 <code>BoundedBlockingQueue</code>）来存放外面丢进来的任务。<br><strong>问题来了：这个队列的类型 <code>T</code> 应该是什么？</strong></p>
+<p>用户丢进来的任务千奇百怪：</p>
+<ul>
+<li>可能是无参函数 <code>void f()</code></li>
+<li>可能是带参函数 <code>int add(int, int)</code></li>
+<li>可能是 Lambda 表达式</li>
+<li>可能是类的成员函数</li>
+</ul>
+<p>我们不可能为每一种函数签名去写一个队列。我们需要一种终极容器，能把所有“可调用的东西（Callable）”全部塞进去。这就是 <strong><code>std::function</code></strong>。<br>它是 C++ 提供的“类型擦除”魔术盒。通常我们把所有的任务，通过 Lambda 闭包捕获参数的方式，强制包装成统一的无参无返回值签名：<code>std::function&lt;void()&gt;</code>。</p>
+<h4 id="📚-老兵推荐阅读（理论补强）-3"><a href="#📚-老兵推荐阅读（理论补强）-3" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 32</strong>: <em>Use init capture to move objects into closures</em>. （学习如何在 C++14 里用移动捕获来优化性能，虽然我们以 C++11 为主，但理念必须懂）。</li>
+<li><strong>思考</strong>：<code>std::function</code> 是有代价的。如果它包装的 Lambda 体积太大（比如捕获了一大堆变量），它会在底层悄悄触发一次 <code>new</code> 操作（堆内存分配）。这叫“小对象优化失败（SSO failure）”。</li>
+</ol>
+<h3 id="🏆-学到什么水平才算通关？-3"><a href="#🏆-学到什么水平才算通关？-3" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>能够手写出一个泛型的包装器函数：接收任意签名的函数和任意数量的参数，通过 <code>std::bind</code> 或 Lambda 将其打包成 <code>std::function&lt;void()&gt;</code>，并最终返回一个 <code>future</code> 给调用者。这正是线程池 <code>enqueue</code> 函数的绝对核心。</p>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：手撕万能任务打包器</strong><br>这是本周最烧脑的一段代码，大量使用了 C++11 的可变参数模板（Variadic Templates）和完美转发（Perfect Forwarding）。<br>新建 <code>week03/day04.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 这个函数就是你未来线程池的 submit 接口的雏形</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> F, <span class="keyword">class</span>... Args&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">WrapTask</span><span class="params">(F&amp;&amp; f, Args&amp;&amp;... args)</span> </span></span><br><span class="line"><span class="function">    -&gt; std::future&lt;<span class="keyword">typename</span> std::result_of&lt;<span class="title">F</span><span class="params">(Args...)</span>&gt;::type&gt; </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 1. 推导出原函数的返回值类型 (比如 int)</span></span><br><span class="line">    <span class="keyword">using</span> return_type = <span class="keyword">typename</span> std::result_of&lt;<span class="built_in">F</span>(Args...)&gt;::type;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 将原函数和参数绑定成一个无参的 packaged_task</span></span><br><span class="line">    <span class="comment">// 注意：我们将 packaged_task 扔进了一个 shared_ptr 里。</span></span><br><span class="line">    <span class="comment">// 为什么？因为 std::function 要求它包装的对象必须是“可拷贝的(CopyConstructible)”。</span></span><br><span class="line">    <span class="comment">// 而 packaged_task 是只支持移动(Move-only)的！这是一个老 C++11 的恶心坑点。</span></span><br><span class="line">    <span class="comment">// 用 shared_ptr 包裹后，指针本身是可以拷贝的。</span></span><br><span class="line">    <span class="keyword">auto</span> task = std::make_shared&lt;std::packaged_task&lt;<span class="built_in">return_type</span>()&gt;&gt;(</span><br><span class="line">        std::<span class="built_in">bind</span>(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 从任务里榨取 future</span></span><br><span class="line">    std::future&lt;return_type&gt; res = task-&gt;<span class="built_in">get_future</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 4. 将其包装成最终的 std::function&lt;void()&gt; 无参大铁盒</span></span><br><span class="line">    std::function&lt;<span class="type">void</span>()&gt; void_func = [task]() &#123;</span><br><span class="line">        (*task)(); <span class="comment">// 执行真正的任务</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5. 模拟放进队列并被工作线程执行</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[包装器] 任务已包装为统一签名 std::function&lt;void()&gt;&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="function">std::thread <span class="title">worker</span><span class="params">(void_func)</span></span>;</span><br><span class="line">    worker.<span class="built_in">detach</span>(); <span class="comment">// 模拟后台执行</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 6. 返回 future 给用户</span></span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">MyComplexMath</span><span class="params">(<span class="type">int</span> a, <span class="type">double</span> b, std::string prefix)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; prefix &lt;&lt; <span class="string">&quot;: &quot;</span> &lt;&lt; a * b &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> a * b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 我们把一个带有复杂参数的函数，极其优雅地丢了进去</span></span><br><span class="line">    std::future&lt;<span class="type">int</span>&gt; fut = <span class="built_in">WrapTask</span>(MyComplexMath, <span class="number">10</span>, <span class="number">3.14</span>, <span class="string">&quot;Calculate Result&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 主线程照常拿结果</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] Got returned future. Waiting for value...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[主线程] Value is: &quot;</span> &lt;&lt; fut.<span class="built_in">get</span>() &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 防止主线程立刻退出</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">milliseconds</span>(<span class="number">100</span>)); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>仔细啃透这段代码！</strong> 搞懂了 <code>std::bind</code>、可变参数包展开 <code>...</code>、以及 <code>std::result_of</code>，你的现代 C++ 模板功底就上了一个大台阶。</p>
+<hr>
+<h2 id="Day-5-异常的跨线程传播与本周验收"><a href="#Day-5-异常的跨线程传播与本周验收" class="headerlink" title="Day 5: 异常的跨线程传播与本周验收"></a>Day 5: 异常的跨线程传播与本周验收</h2><h3 id="🎯-知识点深度剖析：当子线程炸了，主线程怎么活下来？"><a href="#🎯-知识点深度剖析：当子线程炸了，主线程怎么活下来？" class="headerlink" title="🎯 知识点深度剖析：当子线程炸了，主线程怎么活下来？"></a>🎯 知识点深度剖析：当子线程炸了，主线程怎么活下来？</h3><p>假设你用 <code>std::thread</code> 开了一个子线程处理网络包。如果在这个子线程里，你的代码抛出了一个异常（比如 <code>std::invalid_argument</code>），并且你没有在子线程内部写 <code>try-catch</code>。<br>猜猜会发生什么？<br>C++ 标准规定：只要有未被捕获的异常逃逸出线程的顶层函数，程序将<strong>立刻调用 <code>std::terminate()</code> 强杀整个进程</strong>！<br>你辛辛苦苦写的服务器，因为一个不起眼的子线程抛了个异常，直接全盘崩溃。</p>
+<p>但这周我们学了 <code>future</code>，奇迹出现了。<br>如果一个被 <code>packaged_task</code> 或 <code>promise</code> 管理的后台任务抛出了异常，这个异常<strong>不会导致进程崩溃</strong>！它会被底层的共享状态（Shared State）捕获，然后像保存普通数据一样，把这个异常保存在通道里。<br>当主线程调用 <code>future.get()</code> 试图获取数据时，这个被保存的异常会在 <code>get()</code> 的内部<strong>重新抛出（Rethrow）</strong>。这就极其优雅地把异步线程的崩溃，转化为了主线程里一个普普通通的 <code>try-catch</code>。</p>
+<h3 id="🏆-学到什么水平才算通关？-4"><a href="#🏆-学到什么水平才算通关？-4" class="headerlink" title="🏆 学到什么水平才算通关？"></a>🏆 学到什么水平才算通关？</h3><p>必须牢记子线程抛异常的毁灭性后果。在设计任何多线程应用时，要么在子线程的执行体最外层铺设铁桶般的 <code>catch(...)</code>，要么使用 <code>future</code> 机制将异常搬运回主线程集中处理。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：体验 future 对异常的魔法搬运</strong><br>新建 <code>week03/day05.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdexcept&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 一个一定会抛出异常的恶劣函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">RiskyCalculation</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[Worker] 开始计算...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">if</span> (b == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 故意抛出除零异常</span></span><br><span class="line">        <span class="keyword">throw</span> std::<span class="built_in">runtime_error</span>(<span class="string">&quot;Fatal Error: Division by zero in worker thread!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> a / b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">std::packaged_task&lt;<span class="title">int</span><span class="params">(<span class="type">int</span>, <span class="type">int</span>)</span>&gt; <span class="title">task</span><span class="params">(RiskyCalculation)</span></span>;</span><br><span class="line">    std::future&lt;<span class="type">int</span>&gt; fut = task.<span class="built_in">get_future</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 传 0 进去，故意引爆子线程</span></span><br><span class="line">    <span class="function">std::thread <span class="title">t</span><span class="params">(std::move(task), <span class="number">10</span>, <span class="number">0</span>)</span></span>;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[Main] 子线程在干活，主线程等待结果...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 见证奇迹的时刻：子线程抛出的异常，从这里的 get() 爆了出来！</span></span><br><span class="line">        <span class="type">int</span> result = fut.<span class="built_in">get</span>();</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;[Main] 结果是: &quot;</span> &lt;&lt; result &lt;&lt; std::endl;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="built_in">catch</span> (<span class="type">const</span> std::exception&amp; e) &#123;</span><br><span class="line">        <span class="comment">// 成功拦截子线程的崩溃，系统安然无恙！</span></span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;[Main] 捕获到了来自子线程的异常: &quot;</span> &lt;&lt; e.<span class="built_in">what</span>() &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    t.<span class="built_in">join</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;[Main] 系统稳定退出，没有 crash。&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译并运行。看着主线程安稳地打出错误日志而不是 <code>core dumped</code>，这就叫企业级的健壮性。</p>
+<p><strong>任务 2：清理与提交 (Git)</strong><br>整理所有的代码到 CMake 中确保无警告编译。将本周核心心法整理进你的 <code>week03.md</code> 笔记顶部，然后执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 03: 掌握 future、packaged_task 与 Lambda 闭包生命周期坑点&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>下周，我们将啃下 C++ 并发里另一块极难啃的骨头：多线程下的智能指针（<code>shared_ptr</code> 的爱与恨），同时给我们的项目接入高颜值的日志系统 <code>fmt/spdlog</code>。周末愉快！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li>👉 <strong>Week 03：future 与 Lambda（异步编程的现代化救赎）</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week02/" rel="prev" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week04/" rel="next" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">
+                  C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

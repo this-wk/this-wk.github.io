@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="涅槃纪实：Redmi Note 7 Pro (Violet) 爆改满血 Linux 掌上服务器指南作者： wwk (C++ R&amp;D Engineer)  设备： Redmi Note 7 Pro (代号: violet)  系统环境： LineageOS 23.2 (Android 16) + Magisk Root  核心目标： 打造一台 7x24 小时运行、支持原生 Docker、拥有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南">
+<meta property="og:url" content="https://this-wk.github.io/2026/02/26/%E7%BA%A2%E7%B1%B3%E4%BA%91/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="涅槃纪实：Redmi Note 7 Pro (Violet) 爆改满血 Linux 掌上服务器指南作者： wwk (C++ R&amp;D Engineer)  设备： Redmi Note 7 Pro (代号: violet)  系统环境： LineageOS 23.2 (Android 16) + Magisk Root  核心目标： 打造一台 7x24 小时运行、支持原生 Docker、拥有">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-02-25T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T09:53:12.708Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="折腾">
+<meta property="article:tag" content="LineageOS">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/02/26/%E7%BA%A2%E7%B1%B3%E4%BA%91/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/02/26/%E7%BA%A2%E7%B1%B3%E4%BA%91/","path":"2026/02/26/红米云/","title":"涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南 | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%85%E6%A7%83%E7%BA%AA%E5%AE%9E%EF%BC%9ARedmi-Note-7-Pro-Violet-%E7%88%86%E6%94%B9%E6%BB%A1%E8%A1%80-Linux-%E6%8E%8C%E4%B8%8A%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%8C%87%E5%8D%97"><span class="nav-number">1.</span> <span class="nav-text">涅槃纪实：Redmi Note 7 Pro (Violet) 爆改满血 Linux 掌上服务器指南</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%80%EF%BC%9A%E7%A0%B4%E9%99%A4%E6%9E%B7%E9%94%81%E4%B8%8E%E5%A4%BA%E5%8F%96%E5%BA%95%E5%B1%82%E6%8E%A7%E5%88%B6%E6%9D%83"><span class="nav-number">1.1.</span> <span class="nav-text">阶段一：破除枷锁与夺取底层控制权</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%A7%A3%E9%94%81-Bootloader-%E4%B8%8E%E5%88%B7%E5%85%A5-Recovery"><span class="nav-number">1.1.1.</span> <span class="nav-text">1. 解锁 Bootloader 与刷入 Recovery</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%A0%B4%E9%87%9C%E6%B2%89%E8%88%9F%EF%BC%9A%E5%BD%BB%E5%BA%95%E6%B8%85%E7%90%86%E6%97%A7%E6%88%98%E5%9C%BA-%E6%A0%BC%E5%BC%8F%E5%8C%96%E4%B8%8E%E4%BC%A0%E5%8C%85"><span class="nav-number">1.1.2.</span> <span class="nav-text">2. 破釜沉舟：彻底清理旧战场 (格式化与传包)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%B3%A8%E5%85%A5%E6%96%B0%E9%AD%82%EF%BC%9A%E5%88%B7%E5%85%A5-LineageOS-23-2-%E4%B8%8E-Magisk"><span class="nav-number">1.1.3.</span> <span class="nav-text">3. 注入新魂：刷入 LineageOS 23.2 与 Magisk</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%8C%EF%BC%9A%E6%B0%B8%E4%B8%8D%E6%8B%94%E7%AE%A1%E7%9A%84%E7%A1%AC%E4%BB%B6%E7%BA%A7%E6%94%B9%E9%80%A0-%E4%BE%9B%E7%94%B5%E7%AD%96%E7%95%A5"><span class="nav-number">1.2.</span> <span class="nav-text">阶段二：永不拔管的硬件级改造 (供电策略)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%89%EF%BC%9A%E6%9C%80%E7%A1%AC%E6%A0%B8%E7%9A%84%E2%80%9C%E5%BC%80%E8%83%B8%E6%89%8B%E6%9C%AF%E2%80%9D%E2%80%94%E2%80%94%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91-Docker-%E5%86%85%E6%A0%B8"><span class="nav-number">1.3.</span> <span class="nav-text">阶段三：最硬核的“开胸手术”——交叉编译 Docker 内核</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%87%86%E5%A4%87%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83-Ubuntu"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 准备编译环境 (Ubuntu)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%B3%A8%E5%85%A5-Docker-%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 注入 Docker 核心配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-AnyKernel3-%E6%89%93%E5%8C%85%E4%B8%8E%E5%8F%B2%E8%AF%97%E7%BA%A7%E9%81%BF%E5%9D%91-%E2%9A%A0%EF%B8%8F"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. AnyKernel3 打包与史诗级避坑 ⚠️</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B6%E6%AE%B5%E5%9B%9B%EF%BC%9A%E9%A9%AF%E6%9C%8D-Android-16-%E4%B8%8E%E7%8E%AF%E5%A2%83%E5%9F%BA%E5%BB%BA"><span class="nav-number">1.4.</span> <span class="nav-text">阶段四：驯服 Android 16 与环境基建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%A7%A3%E5%86%B3-Root-%E7%8E%AF%E5%A2%83%E7%9A%84%E2%80%9C%E5%A4%B1%E5%BF%86%E2%80%9D%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 解决 Root 环境的“失忆”问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%9A%B4%E6%89%93-Android-16-%E6%9D%80%E5%90%8E%E5%8F%B0%E6%9C%BA%E5%88%B6-%E4%BF%9D%E6%B4%BB%E6%A0%B8%E5%BF%83"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 暴打 Android 16 杀后台机制 (保活核心)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%94%EF%BC%9ADocker-%E7%82%B9%E7%81%AB%E4%B8%8E-C-%E5%BC%80%E5%8F%91%E8%88%B1%E7%B2%BE%E8%A3%85%E4%BF%AE"><span class="nav-number">1.5.</span> <span class="nav-text">阶段五：Docker 点火与 C++ 开发舱精装修</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%8C%82%E8%BD%BD-Cgroup-%E4%B8%8E%E5%90%AF%E5%8A%A8%E5%BC%95%E6%93%8E"><span class="nav-number">1.5.1.</span> <span class="nav-text">1. 挂载 Cgroup 与启动引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E7%BB%88%E6%9E%81-C-%E5%AE%B9%E5%99%A8-Host-%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F-%E2%9A%A0%EF%B8%8F"><span class="nav-number">1.5.2.</span> <span class="nav-text">2. 创建终极 C++ 容器 (Host 网络模式) ⚠️</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%AE%B9%E5%99%A8%E5%86%85%E7%B2%BE%E8%A3%85%E4%BF%AE-ARM64-%E6%8D%A2%E6%BA%90%E4%B8%8E%E5%B7%A5%E5%85%B7%E9%93%BE"><span class="nav-number">1.5.3.</span> <span class="nav-text">3. 容器内精装修 (ARM64 换源与工具链)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%89%93%E9%80%9A-PC-%E7%AB%AF-VS-Code-%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91"><span class="nav-number">1.5.4.</span> <span class="nav-text">4. 打通 PC 端 VS Code 远程开发</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD%EF%BC%9A%E5%9B%BA%E5%8C%96%E5%BF%83%E8%A1%80"><span class="nav-number">1.6.</span> <span class="nav-text">结语：固化心血</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/02/26/%E7%BA%A2%E7%B1%B3%E4%BA%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南 | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          涅槃纪实：Redmi Note 7 Pro 爆改满血 Linux 掌上服务器指南
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-02-26 00:00:00" itemprop="dateCreated datePublished" datetime="2026-02-26T00:00:00+08:00">2026-02-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="涅槃纪实：Redmi-Note-7-Pro-Violet-爆改满血-Linux-掌上服务器指南"><a href="#涅槃纪实：Redmi-Note-7-Pro-Violet-爆改满血-Linux-掌上服务器指南" class="headerlink" title="涅槃纪实：Redmi Note 7 Pro (Violet) 爆改满血 Linux 掌上服务器指南"></a>涅槃纪实：Redmi Note 7 Pro (Violet) 爆改满血 Linux 掌上服务器指南</h1><p><strong>作者：</strong> wwk (C++ R&amp;D Engineer) </p>
+<p><strong>设备：</strong> Redmi Note 7 Pro (代号: violet) </p>
+<p><strong>系统环境：</strong> LineageOS 23.2 (Android 16) + Magisk Root</p>
+<p> <strong>核心目标：</strong> 打造一台 7x24 小时运行、支持原生 Docker、拥有完整 C++ 编译环境的便携 WebServer 服务器。</p>
+<blockquote>
+<p><strong>写在前面：</strong> 之前写过一篇文章是免root的，虽然开始上手简单，但是不能运行docker，Termux模拟的半吊子linux也不能获取root,总而言之如隔靴搔痒，怎么不得劲怎么来。所以有了这篇文档记录了将一台退役的骁龙 675 手机彻底改造为 Linux 容器服务器的全过程。从底层的 Bootloader 到内核层的 Cgroups 注入，再到应用层的 Android 16 杀后台破解，一路踩坑无数。谨以此文献给所有热爱折腾、不甘心让旧设备在抽屉里吃灰的极客们。</p>
+</blockquote>
+<hr>
+<h2 id="阶段一：破除枷锁与夺取底层控制权"><a href="#阶段一：破除枷锁与夺取底层控制权" class="headerlink" title="阶段一：破除枷锁与夺取底层控制权"></a>阶段一：破除枷锁与夺取底层控制权</h2><p>要把手机变成服务器，第一步就是打破厂商的牢笼，拿到最高权限。</p>
+<h3 id="1-解锁-Bootloader-与刷入-Recovery"><a href="#1-解锁-Bootloader-与刷入-Recovery" class="headerlink" title="1. 解锁 Bootloader 与刷入 Recovery"></a>1. 解锁 Bootloader 与刷入 Recovery</h3><ul>
+<li><p><strong>解锁 BL</strong>：使用小米官方解锁工具，绑定账号并等待解锁周期（通常 168 小时）。<em><strong>这一步不难直接上网搜就行，总共就两步，但是后续一切操作的基石，还是要感谢雷军大帝，不过澎湃就要复杂些了，本文不展开讨论，也不建议这么折腾一遭，其实最好的选择就是把手机卖了，买个云服务器，但是折腾过来了就给同样还有ReadmiNote7Pro的同学们留下点东西吧</strong></em>。</p>
+</li>
+<li><p><strong>准备工作</strong>：</p>
+<p><em>在你的电脑上，请提前准备好以下弹药</em>：</p>
+<ul>
+<li><strong>ADB 与 Fastboot 工具包</strong>：这是与手机底层通信的命令行桥梁。</li>
+<li><strong>小米官方解锁工具 (Mi Unlock)</strong>：用于向官方申请解除设备的 BL 锁。</li>
+<li><strong>OrangeFox Recovery 镜像</strong>：专门为 Redmi Note 7 Pro (violet) 编译的版本（俗称“橙狐”）。强烈建议解压下载好的 ZIP 包，提取出里面的 <code>recovery.img</code> 文件放到电脑桌面备用。</li>
+</ul>
+</li>
+<li><p><strong>刷入引导 (Recovery)</strong>：放弃原厂的 Recovery，使用 <code>fastboot flash recovery recovery.img</code> 刷入强大的 <strong>OrangeFox Recovery</strong>。它不仅支持触屏操作，还能完美解密高版本的 Android <code>data</code> 分区。</p>
+<ul>
+<li><p>将手机关机，长按 <strong>电源键 + 音量减键</strong> 进入 Fastboot 模式，并连接电脑。</p>
+</li>
+<li><p>在电脑提取出的 <code>recovery.img</code> 所在文件夹中，打开命令行终端（CMD 或 PowerShell）。</p>
+</li>
+<li><p><strong>验明正身</strong>：在终端输入 <code>fastboot devices</code> 回车，如果返回了一串由字母和数字组成的序列号，且后面跟着 <code>fastboot</code>，说明底层连接成功，如果没有稍等一会儿，我当时等了大概10S再执行命令就有了。</p>
+</li>
+<li><p><strong>注入灵魂</strong>：敲下这行神圣的命令，将橙狐引导强行刷入恢复分区：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fastboot flash recovery recovery.img</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>强行起飞（极其关键的防踩坑操作）</strong>：刷入成功后，<strong>千万不要用电源键或常规命令重启手机！</strong> MIUI 有一套极其流氓的恢复机制，一旦正常重启，它会把我们刚刷的 OrangeFox 强行覆盖回官方原版。请紧接着在终端敲入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fastboot boot recovery.img</span><br></pre></td></tr></table></figure>
+
+<p>这行命令会让手机绕过系统验证，立刻从你刚才注入的镜像中引导启动</p>
+</li>
+</ul>
+</li>
+<li><p><strong>允许修改</strong>：首次进入 OrangeFox，系统可能会弹出警告并询问是否保持系统分区只读。直接滑动底部的滑块 <strong>“Swipe to Allow Modifications” (滑动以允许修改)</strong>，我们需要绝对的读写权。</p>
+</li>
+</ul>
+<h3 id="2-破釜沉舟：彻底清理旧战场-格式化与传包"><a href="#2-破釜沉舟：彻底清理旧战场-格式化与传包" class="headerlink" title="2. 破釜沉舟：彻底清理旧战场 (格式化与传包)"></a>2. 破釜沉舟：彻底清理旧战场 (格式化与传包)</h3><p>为了后续能够顺利刷入极高版本的 LineageOS 23.2，并解决 Android 底层的数据加密冲突，这一步是无法避免的阵痛。</p>
+<ul>
+<li><strong>格式化 Data (Format Data)</strong>：点击橙狐界面底部的垃圾桶图标 (Wipe)，选择 <strong>Format Data</strong> 选项卡，输入 <code>yes</code> 并确认。<blockquote>
+<p><strong>⚠️ 破釜沉舟警告</strong>：执行 <code>yes</code> 的那一刻，手机上的所有照片、通讯录、旧系统数据将被瞬间化为乌有，相当于硬盘的低级格式化。</p>
+</blockquote>
+</li>
+<li><strong>重启到 Recovery</strong>：格式化完成后，千万不要立刻重启系统！依次点击 <code>Menu -&gt; Reboot -&gt; Recovery</code>，让橙狐在一个绝对干净的底层环境下重新启动。</li>
+<li><strong>💡 极其关键的传包操作</strong>：此时手机内部存储已被完全清空。请用数据线连接电脑，电脑会将其识别为 MTP 设备。趁现在，将提前下载好的 <strong>LineageOS 安装包</strong> 和 <strong>Magisk 压缩包</strong> 复制到手机根目录。</li>
+</ul>
+<h3 id="3-注入新魂：刷入-LineageOS-23-2-与-Magisk"><a href="#3-注入新魂：刷入-LineageOS-23-2-与-Magisk" class="headerlink" title="3. 注入新魂：刷入 LineageOS 23.2 与 Magisk"></a>3. 注入新魂：刷入 LineageOS 23.2 与 Magisk</h3><ul>
+<li><strong>刷入系统与 Root</strong>：在橙狐中点击 Install，先选中 LineageOS 的 ZIP 包刷入。为了防止重启丢失权限，紧接着选中 Magisk 压缩包一并刷入。</li>
+<li><strong>迎接新生</strong>：全部刷入完成后，点击 Reboot System，耐心等待第一次开机。彻底抛弃臃肿的 MIUI，一个极简的底层环境诞生了。</li>
+</ul>
+<hr>
+<h2 id="阶段二：永不拔管的硬件级改造-供电策略"><a href="#阶段二：永不拔管的硬件级改造-供电策略" class="headerlink" title="阶段二：永不拔管的硬件级改造 (供电策略)"></a>阶段二：永不拔管的硬件级改造 (供电策略)</h2><p>作为一台 7x24 小时运行的服务器，长期插电会导致电池鼓包甚至爆炸。我们必须从底层修改供电逻辑。</p>
+<ul>
+<li><strong>部署 ACC (Advanced Charging Controller)</strong>：<ul>
+<li>在 Magisk 中安装 ACC 模块。</li>
+<li>配置供电策略，开启 <strong>“电池直供” (Battery Idle Mode)</strong> 功能。</li>
+<li><strong>原理</strong>：当插着充电线时，主板直接从电源适配器取电，绕过电池。彻底消除电池寿命焦虑和安全隐患，让它真正具备“服务器”的物理素质。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="阶段三：最硬核的“开胸手术”——交叉编译-Docker-内核"><a href="#阶段三：最硬核的“开胸手术”——交叉编译-Docker-内核" class="headerlink" title="阶段三：最硬核的“开胸手术”——交叉编译 Docker 内核"></a>阶段三：最硬核的“开胸手术”——交叉编译 Docker 内核</h2><p>原厂内核缺失了 Docker 运行必须的 <code>namespaces</code> 和 <code>cgroups</code> 特性。为了解决这个问题，我动用了 i5-12600KF 宿主机的强大算力，亲自为 Violet 交叉编译了一颗跳动着 Docker 灵魂的“心脏”。</p>
+<h3 id="1-准备编译环境-Ubuntu"><a href="#1-准备编译环境-Ubuntu" class="headerlink" title="1. 准备编译环境 (Ubuntu)"></a>1. 准备编译环境 (Ubuntu)</h3><p>拉取 Proton Clang 交叉编译工具链和 LineageOS 的官方 <code>sm6150</code> 内核源码。</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --depth=1 -b lineage-21 https://github.com/LineageOS/android_kernel_xiaomi_sm6150.git kernel_violet</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-注入-Docker-核心配置"><a href="#2-注入-Docker-核心配置" class="headerlink" title="2. 注入 Docker 核心配置"></a>2. 注入 Docker 核心配置</h3><p>加载基础配置 <code>make O=out ARCH=arm64 CC=clang vendor/violet-perf_defconfig</code> 后，必须在 <code>.config</code> 中强制开启以下特性：</p>
+<ul>
+<li><strong>Namespaces</strong>: <code>CONFIG_NAMESPACES</code>, <code>CONFIG_UTS_NS</code>, <code>CONFIG_IPC_NS</code>, <code>CONFIG_USER_NS</code>, <code>CONFIG_PID_NS</code>, <code>CONFIG_NET_NS</code></li>
+<li><strong>Cgroups</strong>: <code>CONFIG_CGROUPS</code>, <code>CONFIG_CGROUP_FREEZER</code>, <code>CONFIG_CGROUP_DEVICE</code>, <code>CONFIG_MEMCG</code></li>
+<li><strong>网络与文件系统</strong>: <code>CONFIG_BRIDGE</code>, <code>CONFIG_VETH</code>, <code>CONFIG_OVERLAY_FS</code></li>
+</ul>
+<h3 id="3-AnyKernel3-打包与史诗级避坑-⚠️"><a href="#3-AnyKernel3-打包与史诗级避坑-⚠️" class="headerlink" title="3. AnyKernel3 打包与史诗级避坑 ⚠️"></a>3. AnyKernel3 打包与史诗级避坑 ⚠️</h3><p>编译出 <code>Image.gz-dtb</code> 后，使用 AnyKernel3 打包。</p>
+<ul>
+<li><p><strong>天坑警告</strong>：AnyKernel3 默认脚本中的挂载路径是老旧的 <code>omap</code>。必须手动修改 <code>anykernel.sh</code>：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 错误路径：block=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;</span><br><span class="line"># 正确路径 (骁龙专用)：</span><br><span class="line">block=/dev/block/bootdevice/by-name/boot;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>刷入</strong>：将修改好的 ZIP 包传入手机，通过 OrangeFox 一键刷入 boot 分区。内核手术成功！</p>
+</li>
+</ul>
+<hr>
+<h2 id="阶段四：驯服-Android-16-与环境基建"><a href="#阶段四：驯服-Android-16-与环境基建" class="headerlink" title="阶段四：驯服 Android 16 与环境基建"></a>阶段四：驯服 Android 16 与环境基建</h2><p>有了内核支持，接下来是在 Termux 中搭建宿主环境。这一步与 Android 16 严苛的省电机制进行了长期的拉锯战。</p>
+<h3 id="1-解决-Root-环境的“失忆”问题"><a href="#1-解决-Root-环境的“失忆”问题" class="headerlink" title="1. 解决 Root 环境的“失忆”问题"></a>1. 解决 Root 环境的“失忆”问题</h3><p>在 Termux 中执行 <code>su</code> 会导致环境变量 <code>$PATH</code> 丢失（找不到 <code>pkg</code> 和 <code>docker</code> 命令）。 <strong>解法</strong>：编写专用的入口脚本 <code>enter-root.sh</code> 强行注入环境变量：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line">su -c &#x27;export PATH=/data/data/com.termux/files/usr/bin:$PATH; exec bash&#x27;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-暴打-Android-16-杀后台机制-保活核心"><a href="#2-暴打-Android-16-杀后台机制-保活核心" class="headerlink" title="2. 暴打 Android 16 杀后台机制 (保活核心)"></a>2. 暴打 Android 16 杀后台机制 (保活核心)</h3><p>Android 16 引入了变态的冷冻器，导致 SSH 频繁断开。必须在 Root 权限下连下两道圣旨：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 1. 废掉幽灵进程杀手 (解除 32 个子进程限制)</span><br><span class="line">su -c &#x27;device_config put activity_manager max_phantom_processes 2147483647&#x27;</span><br><span class="line"></span><br><span class="line"># 2. 彻底禁用系统级缓存应用冷冻器 (解决 SSH 息屏断连)</span><br><span class="line">su -c &quot;settings put global cached_apps_freezer_enabled false&quot;</span><br></pre></td></tr></table></figure>
+
+<p>最后，在 Termux 通知栏点击 <strong>Acquire wakelock</strong> 获取电源锁。</p>
+<hr>
+<h2 id="阶段五：Docker-点火与-C-开发舱精装修"><a href="#阶段五：Docker-点火与-C-开发舱精装修" class="headerlink" title="阶段五：Docker 点火与 C++ 开发舱精装修"></a>阶段五：Docker 点火与 C++ 开发舱精装修</h2><p>万事俱备，开始拉起 Docker 并部署 Ubuntu 开发环境。</p>
+<h3 id="1-挂载-Cgroup-与启动引擎"><a href="#1-挂载-Cgroup-与启动引擎" class="headerlink" title="1. 挂载 Cgroup 与启动引擎"></a>1. 挂载 Cgroup 与启动引擎</h3><p>编写 <code>start-docker.sh</code> 脚本，每次开机后自动挂载内核设备并静默拉起 <code>dockerd</code>：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mount -t tmpfs -o mode=755 tmpfs /sys/fs/cgroup</span><br><span class="line">mkdir -p /sys/fs/cgroup/devices</span><br><span class="line">mount -t cgroup -o devices cgroup /sys/fs/cgroup/devices</span><br><span class="line">nohup dockerd &gt; ~/dockerd.log 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-创建终极-C-容器-Host-网络模式-⚠️"><a href="#2-创建终极-C-容器-Host-网络模式-⚠️" class="headerlink" title="2. 创建终极 C++ 容器 (Host 网络模式) ⚠️"></a>2. 创建终极 C++ 容器 (Host 网络模式) ⚠️</h3><p><strong>天坑警告</strong>：Android 内核对虚拟网桥的 NAT 转发支持极差，导致容器内 <code>apt update</code> 卡死在 0%。 <strong>解法</strong>：果断放弃桥接，使用 <code>--net=host</code> 让容器直接共享宿主机网络！</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker run -itd \</span><br><span class="line">  --name webserver \</span><br><span class="line">  --net=host \</span><br><span class="line">  --privileged \</span><br><span class="line">  -v /data/data/com.termux/files/home/project:/root/project \</span><br><span class="line">  ubuntu:22.04</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-容器内精装修-ARM64-换源与工具链"><a href="#3-容器内精装修-ARM64-换源与工具链" class="headerlink" title="3. 容器内精装修 (ARM64 换源与工具链)"></a>3. 容器内精装修 (ARM64 换源与工具链)</h3><p>进入容器 <code>docker exec -it webserver /bin/bash</code>。</p>
+<ul>
+<li><p><strong>ARM64 专属换源</strong>：Ubuntu 的 ARM 架构不能用常规的 <code>archive</code>，必须替换 <code>ports</code> 域名！</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sed -i &#x27;s|ports.ubuntu.com|mirrors.aliyun.com|g&#x27; /etc/apt/sources.list</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>安装 C++ 全家桶</strong>：<code>apt update &amp;&amp; apt install -y g++ cmake make git gdb libssl-dev openssh-server</code></p>
+</li>
+</ul>
+<h3 id="4-打通-PC-端-VS-Code-远程开发"><a href="#4-打通-PC-端-VS-Code-远程开发" class="headerlink" title="4. 打通 PC 端 VS Code 远程开发"></a>4. 打通 PC 端 VS Code 远程开发</h3><ul>
+<li>在容器内修改 <code>/etc/ssh/sshd_config</code>，将端口设为 <strong>2222</strong> (避开 Termux 的 8022)，并允许 Root 登录。</li>
+<li>执行 <code>service ssh start</code>。</li>
+<li>在 PC 端 VS Code 的 Remote-SSH 配置中填入手机 IP 及 2222 端口。</li>
+<li><strong>至此，手机完美化身 C++ 远程工作站。</strong></li>
+</ul>
+<hr>
+<h2 id="结语：固化心血"><a href="#结语：固化心血" class="headerlink" title="结语：固化心血"></a>结语：固化心血</h2><p>经历了无数次的报错与重试，这个环境终于达到了完美的平衡状态。就用最后一行命令给这段旅程画上句号：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker commit webserver my-violet-server:RedmiServerv1</span><br></pre></td></tr></table></figure>
+
+<p>这台 Redmi Note 7 Pro，曾经陪伴过日常，曾在抽屉里吃灰，如今，它以服务器的姿态迎来了真正的赛博朋克式重生。</p>
+<p><strong>End of File.</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/%E6%8A%98%E8%85%BE/" rel="tag"># 折腾</a>
+              <a href="/tags/LineageOS/" rel="tag"># LineageOS</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/02/25/Docker%E5%A4%A7%E6%B3%95%E5%B0%8F%E8%AF%95%E7%89%9B%E5%88%80/" rel="prev" title="Docker 大法小试牛刀">
+                  <i class="fa fa-angle-left"></i> Docker 大法小试牛刀
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/plan-12w/" rel="next" title="C++11 进阶实战专栏：12周学习计划">
+                  C++11 进阶实战专栏：12周学习计划 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

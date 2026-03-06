@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：这是漫长旅途的最后一周，也是你采摘胜利果实的时候。很多人的简历上写的都是“基于 C++ 实现了增删改查”、“做了一个图书管理系统”。这对于高级岗位来说，太单薄了。 今天，我们要把前十一周写的所有高难度底层组件全部拼装起来，打造一个类似于微型 Redis 的系统：异步内存键值存储引擎（Asynchronous Key-Value Server）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week12/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：这是漫长旅途的最后一周，也是你采摘胜利果实的时候。很多人的简历上写的都是“基于 C++ 实现了增删改查”、“做了一个图书管理系统”。这对于高级岗位来说，太单薄了。 今天，我们要把前十一周写的所有高难度底层组件全部拼装起来，打造一个类似于微型 Redis 的系统：异步内存键值存储引擎（Asynchronous Key-Value Server）">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:13:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:16:04.806Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week12/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week12/","path":"2026/03/05/cpp11-series/week12/","title":"C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-%E7%B3%BB%E7%BB%9F%E9%9B%86%E6%88%90%E4%B8%8E%E5%8D%8F%E8%AE%AE%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.</span> <span class="nav-text">Day 1: 系统集成与协议设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E5%AE%9A%E5%A5%BD%E8%A7%84%E7%9F%A9%E5%86%8D%E5%B9%B2%E6%B4%BB"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：定好规矩再干活</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%E4%B8%8E%E9%AB%98%E5%B9%B6%E5%8F%91%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 业务逻辑与高并发存储引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E9%80%A0%E4%B8%80%E4%B8%AA%E2%80%9C%E9%98%B2%E5%BC%B9%E2%80%9D%E7%9A%84%E5%AD%97%E5%85%B8"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：造一个“防弹”的字典</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E7%9C%8B%E6%9D%BF-Metrics"><span class="nav-number">3.</span> <span class="nav-text">Day 3: 可观测性看板 (Metrics)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E8%83%BD%E6%8A%8A%E8%84%89%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%89%8D%E6%98%AF%E5%A5%BD%E7%B3%BB%E7%BB%9F"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：能把脉的系统才是好系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E6%9E%81%E9%99%90%E7%A0%B4%E5%9D%8F%E6%80%A7%E5%8E%8B%E6%B5%8B%E4%B8%8E%E6%9C%80%E5%90%8E%E8%B0%83%E4%BC%98"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 极限破坏性压测与最后调优</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E7%82%BC%E7%8B%B1%E7%81%AB%E6%B5%B7%E7%9A%84%E6%B4%97%E7%A4%BC"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：炼狱火海的洗礼</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E6%AF%95%E4%B8%9A%E5%A4%8D%E7%9B%98%E4%B8%8E%E7%AE%80%E5%8E%86%E9%97%AA%E5%85%89%E7%82%B9%E6%B2%89%E6%B7%80"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 毕业复盘与简历闪光点沉淀</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E%E7%9A%84%E8%AF%9D"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 写在最后的话</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week12/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:13:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:13:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>这是漫长旅途的最后一周，也是你采摘胜利果实的时候。<br>很多人的简历上写的都是“基于 C++ 实现了增删改查”、“做了一个图书管理系统”。这对于高级岗位来说，太单薄了。</p>
+<p>今天，我们要把前十一周写的所有高难度底层组件全部拼装起来，打造一个类似于微型 Redis 的系统：<strong>异步内存键值存储引擎（Asynchronous Key-Value Server）</strong>。</p>
+<p>它必须具备以下<strong>企业级亮点</strong>：</p>
+<ol>
+<li><strong>全异步网络驱动</strong>：基于 Week 09 的 Asio，支持极高并发。</li>
+<li><strong>独立计算线程池</strong>：基于 Week 05 的 ThreadPool，解析和存储逻辑绝不阻塞网络。</li>
+<li><strong>高并发数据结构</strong>：基于 Week 06 的分段锁（StripedMap）思想，保证多线程下 KV 存取的极高吞吐。</li>
+<li><strong>熔断与背压</strong>：基于 Week 10 的水位控制，在极端压测下保护服务器不死。</li>
+<li><strong>可观测性面板</strong>：系统定期打印自己的 QPS、队列堆积量等健康指标。</li>
+</ol>
+<p>做完这个项目，你对 C++ 的理解将彻底脱胎换骨。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-系统集成与协议设计"><a href="#Day-1-系统集成与协议设计" class="headerlink" title="Day 1: 系统集成与协议设计"></a>Day 1: 系统集成与协议设计</h2><h3 id="🎯-知识点深度剖析：定好规矩再干活"><a href="#🎯-知识点深度剖析：定好规矩再干活" class="headerlink" title="🎯 知识点深度剖析：定好规矩再干活"></a>🎯 知识点深度剖析：定好规矩再干活</h3><p>网络通信必须要有协议。为了简单起见，我们不手写复杂的二进制协议（像 Protobuf 或 flatbuffers），我们使用类似 Redis 的<strong>纯文本换行符协议</strong>。<br>客户端发送：</p>
+<ul>
+<li><code>SET key value\n</code> (设置键值)</li>
+<li><code>GET key\n</code> (获取值)</li>
+<li><code>DEL key\n</code> (删除键)</li>
+</ul>
+<p>服务端回应：</p>
+<ul>
+<li><code>OK\n</code></li>
+<li><code>VALUE value\n</code></li>
+<li><code>NOT_FOUND\n</code></li>
+<li><code>ERROR msg\n</code></li>
+</ul>
+<p><strong>极其重要的细节</strong>：TCP 是面向流的协议，存在<strong>粘包</strong>和<strong>半包</strong>问题。客户端发了一个 <code>GET a\n</code>，服务器可能先收到 <code>GE</code>，再收到 <code>T a\n</code>。所以我们不能用 <code>async_read_some</code> 瞎读了，Asio 提供了专门解决这个问题的神器：<strong><code>asio::async_read_until</code></strong>。它会一直帮你缓存数据，直到读到那个 <code>\n</code> 才触发你的回调！</p>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：准备骨架与基础协议</strong><br>创建一个全新的最终工程目录 <code>week12/</code>。把之前的 <code>ThreadPool.h</code> 拷贝过来。<br>新建 <code>week12/KVServer.h</code> 骨架：<br>（今天我们先把网络壳子搭好，并引入 <code>async_read_until</code>）</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asio.hpp&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;spdlog/spdlog.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ThreadPool.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> asio::ip::tcp;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">KVConnection</span> : <span class="keyword">public</span> std::enable_shared_from_this&lt;KVConnection&gt; &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">KVConnection</span>(tcp::socket socket, ThreadPool&amp; pool)</span><br><span class="line">        : <span class="built_in">socket_</span>(std::<span class="built_in">move</span>(socket)), <span class="built_in">pool_</span>(pool) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Start</span><span class="params">()</span> </span>&#123; <span class="built_in">DoReadUntilNewline</span>(); &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">DoReadUntilNewline</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">self</span><span class="params">(shared_from_this())</span></span>;</span><br><span class="line">        <span class="comment">// 神器：读取直到遇到 \n</span></span><br><span class="line">        asio::<span class="built_in">async_read_until</span>(socket_, buffer_, <span class="string">&#x27;\n&#x27;</span>,</span><br><span class="line">            [<span class="keyword">this</span>, self](std::error_code ec, std::<span class="type">size_t</span> length) &#123;</span><br><span class="line">                <span class="keyword">if</span> (!ec) &#123;</span><br><span class="line">                    <span class="comment">// 把直到 \n 的这行数据提取出来</span></span><br><span class="line">                    std::istream <span class="built_in">is</span>(&amp;buffer_);</span><br><span class="line">                    std::string line;</span><br><span class="line">                    std::<span class="built_in">getline</span>(is, line); </span><br><span class="line">                    <span class="comment">// 处理 Windows 的 \r</span></span><br><span class="line">                    <span class="keyword">if</span> (!line.<span class="built_in">empty</span>() &amp;&amp; line.<span class="built_in">back</span>() == <span class="string">&#x27;\r&#x27;</span>) line.<span class="built_in">pop_back</span>();</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 交给线程池处理！</span></span><br><span class="line">                    pool_.<span class="built_in">enqueue</span>([<span class="keyword">this</span>, self, line]() &#123;</span><br><span class="line">                        <span class="built_in">ProcessCommand</span>(line);</span><br><span class="line">                    &#125;);</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 继续挂钩子等下一行</span></span><br><span class="line">                    <span class="built_in">DoReadUntilNewline</span>();</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ec != asio::error::eof) &#123;</span><br><span class="line">                    spdlog::<span class="built_in">error</span>(<span class="string">&quot;读取错误: &#123;&#125;&quot;</span>, ec.<span class="built_in">message</span>());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">ProcessCommand</span><span class="params">(<span class="type">const</span> std::string&amp; cmd)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// <span class="doctag">TODO:</span> 明天实现真正的 KV 解析和存储</span></span><br><span class="line">        std::string response = <span class="string">&quot;ECHO: &quot;</span> + cmd + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">self</span><span class="params">(shared_from_this())</span></span>;</span><br><span class="line">        asio::<span class="built_in">post</span>(socket_.<span class="built_in">get_executor</span>(), [<span class="keyword">this</span>, self, response]() &#123;</span><br><span class="line">            <span class="built_in">DoWrite</span>(response);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">DoWrite</span><span class="params">(<span class="type">const</span> std::string&amp; msg)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">auto</span> msg_ptr = std::<span class="built_in">make_shared</span>&lt;std::string&gt;(msg);</span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">self</span><span class="params">(shared_from_this())</span></span>;</span><br><span class="line">        asio::<span class="built_in">async_write</span>(socket_, asio::<span class="built_in">buffer</span>(*msg_ptr),</span><br><span class="line">            [<span class="keyword">this</span>, self, msg_ptr](std::error_code ec, std::<span class="type">size_t</span>) &#123;&#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    tcp::socket socket_;</span><br><span class="line">    ThreadPool&amp; pool_;</span><br><span class="line">    asio::streambuf buffer_; <span class="comment">// async_read_until 必须使用动态扩容的 streambuf</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><em>(注意补充 Server 类的 Accept 逻辑，与 Week 09 类似。)</em></p>
+<hr>
+<h2 id="Day-2-业务逻辑与高并发存储引擎"><a href="#Day-2-业务逻辑与高并发存储引擎" class="headerlink" title="Day 2: 业务逻辑与高并发存储引擎"></a>Day 2: 业务逻辑与高并发存储引擎</h2><h3 id="🎯-知识点深度剖析：造一个“防弹”的字典"><a href="#🎯-知识点深度剖析：造一个“防弹”的字典" class="headerlink" title="🎯 知识点深度剖析：造一个“防弹”的字典"></a>🎯 知识点深度剖析：造一个“防弹”的字典</h3><p>如果在线程池里，所有的线程都用同一把大锁去修改一个 <code>std::unordered_map</code>，这个系统的瓶颈立刻就会从网络层转移到锁竞争上。<br>我们要使用 Week 06 学到的**分段锁（StripedMap）**来作为底层存储引擎。</p>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：把 StripedMap 引入并升级</strong><br>新建（或复制修改）<code>week12/StripedMap.h</code>。确保它提供了以下线程安全的接口：</p>
+<ul>
+<li><code>void Set(const string&amp; k, const string&amp; v)</code></li>
+<li><code>bool Get(const string&amp; k, string&amp; v)</code></li>
+<li><code>bool Delete(const string&amp; k)</code></li>
+</ul>
+<p><strong>任务 2：解析纯文本协议并操作存储</strong><br>回到 <code>KVServer.h</code> 的 <code>ProcessCommand</code> 中。我们需要把命令按空格拆分（<code>SET key value</code>）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 假设在 KVConnection 构造时，把全局的 StripedMap 引用也传进来了</span></span><br><span class="line"><span class="comment">// StripedMap&lt;std::string, std::string&gt;&amp; store_;</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessCommand</span><span class="params">(<span class="type">const</span> std::string&amp; cmd)</span> </span>&#123;</span><br><span class="line">    std::string response;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 极简的字符串拆分</span></span><br><span class="line">    <span class="type">size_t</span> first_space = cmd.<span class="built_in">find</span>(<span class="string">&#x27; &#x27;</span>);</span><br><span class="line">    std::string action = cmd.<span class="built_in">substr</span>(<span class="number">0</span>, first_space);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (action == <span class="string">&quot;GET&quot;</span> &amp;&amp; first_space != std::string::npos) &#123;</span><br><span class="line">        std::string key = cmd.<span class="built_in">substr</span>(first_space + <span class="number">1</span>);</span><br><span class="line">        std::string val;</span><br><span class="line">        <span class="keyword">if</span> (store_.<span class="built_in">Get</span>(key, val)) &#123;</span><br><span class="line">            response = <span class="string">&quot;VALUE &quot;</span> + val + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            response = <span class="string">&quot;NOT_FOUND\n&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (action == <span class="string">&quot;SET&quot;</span> &amp;&amp; first_space != std::string::npos) &#123;</span><br><span class="line">        <span class="type">size_t</span> second_space = cmd.<span class="built_in">find</span>(<span class="string">&#x27; &#x27;</span>, first_space + <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (second_space != std::string::npos) &#123;</span><br><span class="line">            std::string key = cmd.<span class="built_in">substr</span>(first_space + <span class="number">1</span>, second_space - first_space - <span class="number">1</span>);</span><br><span class="line">            std::string val = cmd.<span class="built_in">substr</span>(second_space + <span class="number">1</span>);</span><br><span class="line">            store_.<span class="built_in">Put</span>(key, val);</span><br><span class="line">            response = <span class="string">&quot;OK\n&quot;</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            response = <span class="string">&quot;ERROR Invalid SET format\n&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        response = <span class="string">&quot;ERROR Unknown command\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 安全打回 IO 线程</span></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">self</span><span class="params">(shared_from_this())</span></span>;</span><br><span class="line">    asio::<span class="built_in">post</span>(socket_.<span class="built_in">get_executor</span>(), [<span class="keyword">this</span>, self, response]() &#123;</span><br><span class="line">        <span class="built_in">DoWrite</span>(response);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用 telnet 连上去测一下 <code>SET</code> 和 <code>GET</code>。一个微型的高并发数据库诞生了！</p>
+<hr>
+<h2 id="Day-3-可观测性看板-Metrics"><a href="#Day-3-可观测性看板-Metrics" class="headerlink" title="Day 3: 可观测性看板 (Metrics)"></a>Day 3: 可观测性看板 (Metrics)</h2><h3 id="🎯-知识点深度剖析：能把脉的系统才是好系统"><a href="#🎯-知识点深度剖析：能把脉的系统才是好系统" class="headerlink" title="🎯 知识点深度剖析：能把脉的系统才是好系统"></a>🎯 知识点深度剖析：能把脉的系统才是好系统</h3><p>系统在黑盒里狂跑，我们心里没底。我们需要一个定时的探针，每隔 5 秒向控制台打印一次当前服务器的“体检报告”：</p>
+<ul>
+<li>目前累计处理了多少个请求？</li>
+<li>目前的 QPS（每秒请求数）是多少？</li>
+<li>线程池的队列里压了多少个任务还没处理？</li>
+</ul>
+<p>这在工业界叫做 Metrics 采集。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：增加全局计数器与定时打印</strong><br>在 <code>KVServer</code> 类中：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 增加原子计数器</span></span><br><span class="line">std::atomic&lt;<span class="type">long</span> <span class="type">long</span>&gt; total_requests_&#123;<span class="number">0</span>&#125;;</span><br><span class="line"><span class="type">long</span> <span class="type">long</span> last_requests_&#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 在 Server 类里挂一个专用的定时器</span></span><br><span class="line">asio::steady_timer metrics_timer_;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 在构造函数里启动定时器</span></span><br><span class="line"><span class="built_in">KVServer</span>(...) : <span class="built_in">metrics_timer_</span>(io_context, std::chrono::<span class="built_in">seconds</span>(<span class="number">5</span>)) &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="built_in">PrintMetrics</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">PrintMetrics</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    metrics_timer_.<span class="built_in">async_wait</span>([<span class="keyword">this</span>](std::error_code ec) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!ec) &#123;</span><br><span class="line">            <span class="type">long</span> <span class="type">long</span> current = total_requests_.<span class="built_in">load</span>(std::memory_order_relaxed);</span><br><span class="line">            <span class="type">long</span> <span class="type">long</span> qps = (current - last_requests_) / <span class="number">5</span>;</span><br><span class="line">            last_requests_ = current;</span><br><span class="line">            </span><br><span class="line">            spdlog::<span class="built_in">info</span>(<span class="string">&quot;--- [服务器体检报告] ---&quot;</span>);</span><br><span class="line">            spdlog::<span class="built_in">info</span>(<span class="string">&quot;总请求数: &#123;&#125;&quot;</span>, current);</span><br><span class="line">            spdlog::<span class="built_in">info</span>(<span class="string">&quot;当前 QPS: &#123;&#125; /s&quot;</span>, qps);</span><br><span class="line">            spdlog::<span class="built_in">info</span>(<span class="string">&quot;线程池积压数: &#123;&#125;&quot;</span>, pool_.<span class="built_in">GetPendingTaskCount</span>());</span><br><span class="line">            spdlog::<span class="built_in">info</span>(<span class="string">&quot;----------------------&quot;</span>);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 再次挂上 5 秒后的定时器</span></span><br><span class="line">            metrics_timer_.<span class="built_in">expires_after</span>(std::chrono::<span class="built_in">seconds</span>(<span class="number">5</span>));</span><br><span class="line">            <span class="built_in">PrintMetrics</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>记得在 <code>KVConnection</code> 成功处理一条命令后，执行 <code>server_ref.total_requests_++;</code>（可以通过传参把引用带给 Connection）。</p>
+<hr>
+<h2 id="Day-4-极限破坏性压测与最后调优"><a href="#Day-4-极限破坏性压测与最后调优" class="headerlink" title="Day 4: 极限破坏性压测与最后调优"></a>Day 4: 极限破坏性压测与最后调优</h2><h3 id="🎯-知识点深度剖析：炼狱火海的洗礼"><a href="#🎯-知识点深度剖析：炼狱火海的洗礼" class="headerlink" title="🎯 知识点深度剖析：炼狱火海的洗礼"></a>🎯 知识点深度剖析：炼狱火海的洗礼</h3><p>今天是这 12 周中最刺激的一天。我们要用多线程脚本对你的服务器发起狂暴的毁灭性攻击，看看它会不会崩，QPS 极限能冲到多少。</p>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：编写极致压测脚本</strong><br>新建 <code>week12/benchmark.py</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> threading</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>():</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span><br><span class="line">        s.connect((<span class="string">&#x27;127.0.0.1&#x27;</span>, <span class="number">8080</span>))</span><br><span class="line">        <span class="comment"># 建立连接后，疯狂发送数据</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50000</span>):</span><br><span class="line">            s.sendall(<span class="string">f&quot;SET k<span class="subst">&#123;i&#125;</span> v<span class="subst">&#123;i&#125;</span>\n&quot;</span>.encode())</span><br><span class="line">            s.recv(<span class="number">1024</span>) <span class="comment"># 等待回复</span></span><br><span class="line">            </span><br><span class="line">            s.sendall(<span class="string">f&quot;GET k<span class="subst">&#123;i&#125;</span>\n&quot;</span>.encode())</span><br><span class="line">            s.recv(<span class="number">1024</span>)</span><br><span class="line">        s.close()</span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        <span class="built_in">print</span>(e)</span><br><span class="line"></span><br><span class="line">threads = []</span><br><span class="line"><span class="comment"># 开启 20 个攻击线程，总计 200 万次请求</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">20</span>):</span><br><span class="line">    t = threading.Thread(target=attack)</span><br><span class="line">    threads.append(t)</span><br><span class="line">    t.start()</span><br><span class="line"></span><br><span class="line">start = time.time()</span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> threads:</span><br><span class="line">    t.join()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;压测完成！总耗时 <span class="subst">&#123;time.time() - start:<span class="number">.2</span>f&#125;</span> 秒&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>任务 2：迎战与观测</strong><br>在 CMake 中开启 <code>-O2</code> 优化（一定要关掉 Sanitizers，因为它们会极大拖慢性能导致测不准 QPS）。<br>启动你的 C++ Server，然后启动 Python 压测脚本。<br><strong>注视你的 C++ 终端面板！</strong><br>你将看到那份炫酷的 <code>[服务器体检报告]</code> 稳定地每 5 秒输出一次，QPS 可能会飙升到好几万甚至十万以上。线程池积压数随着请求的波动而平滑起伏，服务器丝般顺滑，毫无压力地接下了两百万次并发读写！</p>
+<hr>
+<h2 id="Day-5-毕业复盘与简历闪光点沉淀"><a href="#Day-5-毕业复盘与简历闪光点沉淀" class="headerlink" title="Day 5: 毕业复盘与简历闪光点沉淀"></a>Day 5: 毕业复盘与简历闪光点沉淀</h2><h3 id="🎯-写在最后的话"><a href="#🎯-写在最后的话" class="headerlink" title="🎯 写在最后的话"></a>🎯 写在最后的话</h3><p>恭喜你！历时整整 12 周，每天 2 小时，你在下班后的无数个深夜里，亲手用 C++11 从零敲出了一个包含线程池、异步网络、高级锁和观测面板的企业级中间件。<br>你不再是那个面对 <code>Segmentation Fault</code> 不知所措的新人，也不是那个一写多线程就害怕死锁的菜鸟。你掌握了 CMake、Sanitizers、perf、GTest，你理解了 Asio 的事件循环，你懂得了内存模型的奥秘。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>最后一次任务：把这些黄金经验写进简历</strong><br>不要只写：“用 C++ 写了一个 KV 服务器”。<br><strong>请这样写在你的简历项目经历中：</strong></p>
+<blockquote>
+<p><strong>项目名称：基于现代 C++ 的高性能异步 KV 存储系统</strong></p>
+<ul>
+<li><strong>架构设计</strong>：采用 Reactor + Worker Thread Pool 架构，利用 Boost.Asio (<code>io_context</code>) 处理底层网络事件，彻底解耦网络 IO 与业务计算。</li>
+<li><strong>并发编程</strong>：手写无锁 &#x2F; <code>condition_variable</code> 驱动的带有<strong>背压（Backpressure）机制</strong>的阻塞队列，有效防范突发流量引发的 OOM。深入运用 <code>std::unique_ptr</code> 与 <code>std::shared_ptr</code> &#x2F; <code>weak_ptr</code> 解决异步回调环境下的悬垂引用与对象生命周期灾难。</li>
+<li><strong>性能优化</strong>：针对全局锁引发的竞争瓶颈，设计并实现了**分段锁（Striped Lock）**哈希表；利用 <code>perf</code> 抓取火焰图（FlameGraph），使用 <code>alignas</code> 消除 CPU 伪共享（False Sharing），应用右值移动语义（<code>std::move</code>）消除深拷贝，使单机 QPS 达到 10 万+。</li>
+<li><strong>工程化</strong>：基于 CMake 搭建构建系统，引入 GoogleTest 进行多线程极限正确性验证，集成 AddressSanitizer (ASan) 与 ThreadSanitizer (TSan) 保证零内存泄漏与零数据竞争；集成 spdlog 实现低延迟连接上下文追踪与系统 Metrics 定时巡检。</li>
+</ul>
+</blockquote>
+<p><strong>提交你最终的毕业代码：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 12: 12周特训圆满结业！全异步高性能观测 KV Server 交付！&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>带着这份代码和简历，去拿下你心仪的高级 C++ 岗位吧。江湖路远，老兵祝你前程似锦！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week11/" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</a></li>
+<li>👉 <strong>Week 12：综合实战结业（可观测的异步 KV Server）</strong> (当前位置)</li>
+</ul>
+
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week11/" rel="prev" title="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

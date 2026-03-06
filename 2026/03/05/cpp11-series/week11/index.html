@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：过去十周，我们在并发和网络的泥潭里摸爬滚打，追求的是“不死”和“快”。但在企业开发中，代码是写给人看的，只是顺便让机器执行。如果你写出来的代码虽然跑得快，但满篇都是 std::vector&lt;std::map&lt;std::string, int&gt;&gt;::const_iterator it &#x3D; ... 这种又臭又长的类型，或者">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week11/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：过去十周，我们在并发和网络的泥潭里摸爬滚打，追求的是“不死”和“快”。但在企业开发中，代码是写给人看的，只是顺便让机器执行。如果你写出来的代码虽然跑得快，但满篇都是 std::vector&lt;std::map&lt;std::string, int&gt;&gt;::const_iterator it &#x3D; ... 这种又臭又长的类型，或者">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-05T02:12:00.000Z">
+<meta property="article:modified_time" content="2026-03-05T10:16:04.802Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++11">
+<meta property="article:tag" content="后端开发">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/05/cpp11-series/week11/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/05/cpp11-series/week11/","path":"2026/03/05/cpp11-series/week11/","title":"C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码） | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-1-%E7%B1%BB%E5%9E%8B%E6%8E%A8%E5%AF%BC%E7%9A%84%E8%89%BA%E6%9C%AF%E4%B8%8E%E9%99%B7%E9%98%B1-auto-%E4%B8%8E-decltype"><span class="nav-number">1.</span> <span class="nav-text">Day 1: 类型推导的艺术与陷阱 (auto 与 decltype)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9Aauto-%E4%B8%8D%E6%98%AF%E4%B8%87%E8%83%BD%E8%8D%AF"><span class="nav-number">1.1.</span> <span class="nav-text">🎯 知识点深度剖析：auto 不是万能药</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97"><span class="nav-number">1.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-2-%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E7%9A%84%E6%9E%81%E8%87%B4%E5%8E%8B%E6%A6%A8-std-move-%E4%B8%8E-noexcept"><span class="nav-number">2.</span> <span class="nav-text">Day 2: 移动语义的极致压榨 (std::move 与 noexcept)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%A0%E7%9A%84-vector-%E6%89%A9%E5%AE%B9%E6%AF%94%E5%88%AB%E4%BA%BA%E6%85%A2%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">🎯 知识点深度剖析：为什么你的 vector 扩容比别人慢？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%F0%9F%93%9A-%E8%80%81%E5%85%B5%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB%EF%BC%88%E7%90%86%E8%AE%BA%E8%A1%A5%E5%BC%BA%EF%BC%89-1"><span class="nav-number">2.1.1.</span> <span class="nav-text">📚 老兵推荐阅读（理论补强）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-1"><span class="nav-number">2.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-3-STL-%E7%AE%97%E6%B3%95%E5%8C%96%E7%AE%80%E4%BB%A3%E7%A0%81-%E6%B6%88%E9%99%A4-raw-for-loop"><span class="nav-number">3.</span> <span class="nav-text">Day 3: STL 算法化简代码 (消除 raw for loop)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E5%BE%AA%E7%8E%AF%E6%98%AF-Bug-%E7%9A%84%E6%B8%A9%E5%BA%8A"><span class="nav-number">3.1.</span> <span class="nav-text">🎯 知识点深度剖析：循环是 Bug 的温床</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-2"><span class="nav-number">3.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-4-%E5%BE%81%E6%9C%8D%E5%85%B3%E8%81%94%E5%AE%B9%E5%99%A8%E2%80%94%E2%80%94%E8%87%AA%E5%AE%9A%E4%B9%89%E5%93%88%E5%B8%8C%E4%B8%8E%E6%AF%94%E8%BE%83%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">Day 4: 征服关联容器——自定义哈希与比较器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E6%8A%8A%E6%88%91%E7%9A%84%E7%BB%93%E6%9E%84%E4%BD%93%E5%A1%9E%E8%BF%9B-unordered-map%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">🎯 知识点深度剖析：为什么不能把我的结构体塞进 unordered_map？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-3"><span class="nav-number">4.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Day-5-%E7%BB%8F%E9%AA%8C%E5%86%85%E5%8C%96%E4%B8%8E%E6%9C%AC%E5%91%A8%E5%A4%8D%E7%9B%98"><span class="nav-number">5.</span> <span class="nav-text">Day 5: 经验内化与本周复盘</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8E%AF-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%B7%B1%E5%BA%A6%E5%89%96%E6%9E%90%EF%BC%9A%E4%BB%8E%E2%80%9C%E8%83%BD%E8%B7%91%E2%80%9D%E5%88%B0%E2%80%9C%E4%BC%98%E9%9B%85%E2%80%9D%E7%9A%84%E8%9C%95%E5%8F%98"><span class="nav-number">5.1.</span> <span class="nav-text">🎯 知识点深度剖析：从“能跑”到“优雅”的蜕变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%92%BB-%E8%AF%A6%E7%BB%86%E7%BC%96%E7%A0%81%E5%AE%9E%E6%93%8D%E6%8C%87%E5%8D%97-4"><span class="nav-number">5.2.</span> <span class="nav-text">💻 详细编码实操指南</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%9A-%E3%80%8AC-11-%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98%E4%B8%93%E6%A0%8F%E3%80%8B%E5%AF%BC%E8%88%AA"><span class="nav-number">5.3.</span> <span class="nav-text">📚 《C++11 进阶实战专栏》导航</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/05/cpp11-series/week11/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码） | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          C++11 进阶实战 | Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-05 10:12:00" itemprop="dateCreated datePublished" datetime="2026-03-05T10:12:00+08:00">2026-03-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/C-11%E8%BF%9B%E9%98%B6%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">C++11进阶实战</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
+<p><strong>来自老工程师的嘱托</strong>：<br>过去十周，我们在并发和网络的泥潭里摸爬滚打，追求的是“不死”和“快”。<br>但在企业开发中，代码是写给人看的，只是顺便让机器执行。如果你写出来的代码虽然跑得快，但满篇都是 <code>std::vector&lt;std::map&lt;std::string, int&gt;&gt;::const_iterator it = ...</code> 这种又臭又长的类型，或者几百行的原始 <code>for</code> 循环，你的同事在 Code Review 时是会抓狂的。</p>
+<p>这周我们不讲架构，我们来“洗代码”。<br>现代 C++（C++11&#x2F;14）引入了大量能让代码变得极其优雅的特性和算法。把这周的东西掌握好，你的代码会散发出一股浓浓的“高级感”。</p>
+</blockquote>
+<hr>
+<h2 id="Day-1-类型推导的艺术与陷阱-auto-与-decltype"><a href="#Day-1-类型推导的艺术与陷阱-auto-与-decltype" class="headerlink" title="Day 1: 类型推导的艺术与陷阱 (auto 与 decltype)"></a>Day 1: 类型推导的艺术与陷阱 (<code>auto</code> 与 <code>decltype</code>)</h2><h3 id="🎯-知识点深度剖析：auto-不是万能药"><a href="#🎯-知识点深度剖析：auto-不是万能药" class="headerlink" title="🎯 知识点深度剖析：auto 不是万能药"></a>🎯 知识点深度剖析：<code>auto</code> 不是万能药</h3><p><code>auto</code> 是 C++11 最受欢迎的特性。它不仅能少敲键盘，更重要的是能<strong>防止隐式的类型转换导致性能下降</strong>。<br>比如 <code>for (const std::pair&lt;std::string, int&gt;&amp; p : my_map)</code>，如果你的 Map 是 <code>std::map&lt;std::string, int&gt;</code>，你以为没问题？<br>错！Map 内部存的是 <code>std::pair&lt;const std::string, int&gt;</code>！因为你漏写了 <code>const</code>，编译器会在每次循环时，把节点里的值<strong>深拷贝</strong>成一个你指定的临时 <code>pair</code>，性能直接炸裂。<br>如果写成 <code>for (const auto&amp; p : my_map)</code>，完美避坑。</p>
+<p><strong>但 <code>auto</code> 也有致命陷阱：它默认会剥离掉“引用（Reference）”和“常量（const）”属性！</strong></p>
+<h4 id="📚-老兵推荐阅读（理论补强）"><a href="#📚-老兵推荐阅读（理论补强）" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 1, 2, 5, 6</strong>: 关于模板类型推导和 <code>auto</code> 推导的规则，尤其是 Item 2 讲述 <code>auto</code> 推导大括号初始化 <code>&#123;&#125;</code> 的怪异行为。</li>
+</ol>
+<h3 id="💻-详细编码实操指南"><a href="#💻-详细编码实操指南" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：体验 <code>auto</code> 丢失引用导致的灾难</strong><br>新建 <code>week11/day01_auto_trap.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HeavyObject</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">HeavyObject</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="built_in">HeavyObject</span>(<span class="type">const</span> HeavyObject&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;  [警告] 发生了极其昂贵的深拷贝！\n&quot;</span>; &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Modify</span><span class="params">()</span> </span>&#123; data_ += <span class="string">&quot;_mod&quot;</span>; &#125;</span><br><span class="line">    std::string data_ = <span class="string">&quot;base&quot;</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DataManager</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">HeavyObject&amp; <span class="title">GetObject</span><span class="params">(<span class="type">int</span> index)</span> </span>&#123; <span class="keyword">return</span> objects_[index]; &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::vector&lt;HeavyObject&gt; objects_&#123;<span class="number">1</span>&#125;; <span class="comment">// 存了 1 个元素</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    DataManager manager;</span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;--- 菜鸟写法 ---\n&quot;</span>;</span><br><span class="line">    <span class="comment">// 致命错误 1：原本 GetObject 返回的是引用，但 auto 强行剥离了引用！</span></span><br><span class="line">    <span class="comment">// obj 变成了一个全新的局部变量，发生深拷贝！</span></span><br><span class="line">    <span class="keyword">auto</span> obj = manager.<span class="built_in">GetObject</span>(<span class="number">0</span>); </span><br><span class="line">    obj.<span class="built_in">Modify</span>(); <span class="comment">// 修改的是局部副本</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;原数据是否被修改？ &quot;</span> &lt;&lt; manager.<span class="built_in">GetObject</span>(<span class="number">0</span>).data_ &lt;&lt; <span class="string">&quot;\n&quot;</span>; <span class="comment">// 输出依然是 &quot;base&quot;</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n--- 老兵写法 ---\n&quot;</span>;</span><br><span class="line">    <span class="comment">// 正确：显式加上引用符号！</span></span><br><span class="line">    <span class="keyword">auto</span>&amp; ref_obj = manager.<span class="built_in">GetObject</span>(<span class="number">0</span>);</span><br><span class="line">    ref_obj.<span class="built_in">Modify</span>();</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;原数据是否被修改？ &quot;</span> &lt;&lt; manager.<span class="built_in">GetObject</span>(<span class="number">0</span>).data_ &lt;&lt; <span class="string">&quot;\n&quot;</span>; <span class="comment">// 输出 &quot;base_mod&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行观察。牢记：当你想要持有对象的引用时，绝不能只写 <code>auto</code>，必须写 <code>auto&amp;</code> 或 <code>const auto&amp;</code>。</p>
+<hr>
+<h2 id="Day-2-移动语义的极致压榨-std-move-与-noexcept"><a href="#Day-2-移动语义的极致压榨-std-move-与-noexcept" class="headerlink" title="Day 2: 移动语义的极致压榨 (std::move 与 noexcept)"></a>Day 2: 移动语义的极致压榨 (<code>std::move</code> 与 <code>noexcept</code>)</h2><h3 id="🎯-知识点深度剖析：为什么你的-vector-扩容比别人慢？"><a href="#🎯-知识点深度剖析：为什么你的-vector-扩容比别人慢？" class="headerlink" title="🎯 知识点深度剖析：为什么你的 vector 扩容比别人慢？"></a>🎯 知识点深度剖析：为什么你的 vector 扩容比别人慢？</h3><p>我们在 Week 07 学过，用 <code>std::move</code> 把右值资源“偷”过来能大幅提高性能。<br>但你有没有想过，当你自己写了一个类（比如包含了一些指针和句柄），并且你把它放进了 <code>std::vector</code> 里。当 <code>vector</code> 满载触发扩容（重新分配内存）时，它会怎么把你的对象搬到新内存去？</p>
+<p>编译器在搬移时，会去检查你的类的<strong>移动构造函数</strong>。<br>如果你写了移动构造函数，但<strong>没有加上 <code>noexcept</code> 关键字</strong>，编译器会想：“如果在移动到一半的时候，这个函数抛出了异常，那整个 <code>vector</code> 就被破坏了，无法恢复原状。太危险了！”<br>于是，哪怕你有移动构造函数，编译器也会**极其保守地退回到使用“拷贝构造函数”**去搬移你的对象（因为拷贝失败原对象还在，具有强异常安全保证）。</p>
+<p><strong>铁律：所有的移动构造函数和移动赋值运算符，必须、绝对要加上 <code>noexcept</code>。</strong> 告诉编译器：“我保证偷资源绝对不会抛异常，你放心大胆地用移动来扩容吧！”</p>
+<h4 id="📚-老兵推荐阅读（理论补强）-1"><a href="#📚-老兵推荐阅读（理论补强）-1" class="headerlink" title="📚 老兵推荐阅读（理论补强）"></a>📚 老兵推荐阅读（理论补强）</h4><ol>
+<li><strong>《Effective Modern C++》 Item 14</strong>: <em>Declare functions <code>noexcept</code> if they won’t emit exceptions</em>. 这极大影响容器的操作性能。</li>
+</ol>
+<h3 id="💻-详细编码实操指南-1"><a href="#💻-详细编码实操指南-1" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：见证 noexcept 的奇迹</strong><br>新建 <code>week11/day02_noexcept.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BadString</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BadString</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="built_in">BadString</span>(<span class="type">const</span> BadString&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;  Bad: 触发拷贝构造\n&quot;</span>; &#125;</span><br><span class="line">    <span class="comment">// 致命：忘记写 noexcept</span></span><br><span class="line">    <span class="built_in">BadString</span>(BadString&amp;&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;  Bad: 触发移动构造\n&quot;</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">GoodString</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">GoodString</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="built_in">GoodString</span>(<span class="type">const</span> GoodString&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;  Good: 触发拷贝构造\n&quot;</span>; &#125;</span><br><span class="line">    <span class="comment">// 完美：保证不抛异常</span></span><br><span class="line">    <span class="built_in">GoodString</span>(GoodString&amp;&amp;) <span class="keyword">noexcept</span> &#123; std::cout &lt;&lt; <span class="string">&quot;  Good: 触发移动构造\n&quot;</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;--- 测试没写 noexcept 的类在 Vector 扩容时的表现 ---\n&quot;</span>;</span><br><span class="line">    std::vector&lt;BadString&gt; bad_vec;</span><br><span class="line">    bad_vec.<span class="built_in">push_back</span>(<span class="built_in">BadString</span>());</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;准备扩容...\n&quot;</span>;</span><br><span class="line">    bad_vec.<span class="built_in">push_back</span>(<span class="built_in">BadString</span>()); <span class="comment">// 触发扩容，观察输出！</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n--- 测试写了 noexcept 的类 ---\n&quot;</span>;</span><br><span class="line">    std::vector&lt;GoodString&gt; good_vec;</span><br><span class="line">    good_vec.<span class="built_in">push_back</span>(<span class="built_in">GoodString</span>());</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;准备扩容...\n&quot;</span>;</span><br><span class="line">    good_vec.<span class="built_in">push_back</span>(<span class="built_in">GoodString</span>()); <span class="comment">// 触发扩容，观察输出！</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行它。你会清楚地看到，仅仅少写了一个词，导致每次容器扩容时，底层发生了多么昂贵的降级。</p>
+<hr>
+<h2 id="Day-3-STL-算法化简代码-消除-raw-for-loop"><a href="#Day-3-STL-算法化简代码-消除-raw-for-loop" class="headerlink" title="Day 3: STL 算法化简代码 (消除 raw for loop)"></a>Day 3: STL 算法化简代码 (消除 raw for loop)</h2><h3 id="🎯-知识点深度剖析：循环是-Bug-的温床"><a href="#🎯-知识点深度剖析：循环是-Bug-的温床" class="headerlink" title="🎯 知识点深度剖析：循环是 Bug 的温床"></a>🎯 知识点深度剖析：循环是 Bug 的温床</h3><p>在业务代码里，我们经常做这几件事：</p>
+<ol>
+<li>把一个数组里的元素全部乘以 2 存到另一个数组。（映射）</li>
+<li>过滤掉数组里所有小于 0 的数。（过滤）</li>
+<li>把数组里的数全加起来。（规约）</li>
+</ol>
+<p>新手会写一大堆 <code>for</code> 循环，里面夹杂着各种 <code>if</code> 和计数器 <code>i</code>。如果逻辑复杂，极其容易出现索引越界或者逻辑错误。<br>现代 C++ 提倡**“No Raw Loops（消灭原始循环）”**。<br>STL 的 <code>&lt;algorithm&gt;</code> 库配合 C++11 的 Lambda 表达式，可以写出像函数式编程（如 Python&#x2F;JS）一样优雅的代码。</p>
+<h3 id="💻-详细编码实操指南-2"><a href="#💻-详细编码实操指南-2" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：用算法重构烂代码</strong><br>新建 <code>week11/day03_algorithm.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;numeric&gt;</span> <span class="comment">// 为了 accumulate</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; data = &#123;<span class="number">1</span>, <span class="number">-2</span>, <span class="number">3</span>, <span class="number">-4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">-7</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 需求 1：把所有小于 0 的数删掉</span></span><br><span class="line">    <span class="comment">// 菜鸟写法：容易在 erase 时导致迭代器失效，或者 O(N^2) 性能</span></span><br><span class="line">    <span class="comment">// 老兵写法：Erase-Remove Idiom (C++20 可以直接用 std::erase_if)</span></span><br><span class="line">    data.<span class="built_in">erase</span>(std::<span class="built_in">remove_if</span>(data.<span class="built_in">begin</span>(), data.<span class="built_in">end</span>(), [](<span class="type">int</span> x) &#123; <span class="keyword">return</span> x &lt; <span class="number">0</span>; &#125;), data.<span class="built_in">end</span>());</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;过滤后: &quot;</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> n : data) std::cout &lt;&lt; n &lt;&lt; <span class="string">&quot; &quot;</span>; std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 需求 2：把剩下的数全部乘以 10 放到新数组</span></span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; result;</span><br><span class="line">    <span class="comment">// 必须用 back_inserter，否则 result 没空间会直接段错误</span></span><br><span class="line">    std::<span class="built_in">transform</span>(data.<span class="built_in">begin</span>(), data.<span class="built_in">end</span>(), std::<span class="built_in">back_inserter</span>(result), </span><br><span class="line">                   [](<span class="type">int</span> x) &#123; <span class="keyword">return</span> x * <span class="number">10</span>; &#125;);</span><br><span class="line">                   </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;乘以10后: &quot;</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> n : result) std::cout &lt;&lt; n &lt;&lt; <span class="string">&quot; &quot;</span>; std::cout &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 需求 3：求总和</span></span><br><span class="line">    <span class="comment">// 不要写 for 循环累加！</span></span><br><span class="line">    <span class="type">int</span> sum = std::<span class="built_in">accumulate</span>(result.<span class="built_in">begin</span>(), result.<span class="built_in">end</span>(), <span class="number">0</span>);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;总和: &quot;</span> &lt;&lt; sum &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>把这段代码背下来。当你能在公司里用 <code>std::remove_if</code> 替代同事的四层嵌套 <code>for</code> 循环时，你就是团队的 Code Review 之神。</p>
+<hr>
+<h2 id="Day-4-征服关联容器——自定义哈希与比较器"><a href="#Day-4-征服关联容器——自定义哈希与比较器" class="headerlink" title="Day 4: 征服关联容器——自定义哈希与比较器"></a>Day 4: 征服关联容器——自定义哈希与比较器</h2><h3 id="🎯-知识点深度剖析：为什么不能把我的结构体塞进-unordered-map？"><a href="#🎯-知识点深度剖析：为什么不能把我的结构体塞进-unordered-map？" class="headerlink" title="🎯 知识点深度剖析：为什么不能把我的结构体塞进 unordered_map？"></a>🎯 知识点深度剖析：为什么不能把我的结构体塞进 unordered_map？</h3><p><code>std::map</code> 是红黑树，要求 Key 必须能比较大小（有 <code>operator&lt;</code>）。<br><code>std::unordered_map</code> 是哈希表，要求 Key 必须能算哈希值（有 <code>std::hash</code> 特化），并且哈希冲突时能判断是否相等（有 <code>operator==</code>）。</p>
+<p>如果你定义了一个业务结构体 <code>struct User &#123; std::string name; int age; &#125;;</code>，你直接把它当做 <code>unordered_map</code> 的 Key，编译器会爆出一大堆几百行的错误。因为标准库不知道怎么给你的 <code>User</code> 算哈希。</p>
+<p>这是一个非常实用的工程技能，今天我们要把它拿下。</p>
+<h3 id="💻-详细编码实操指南-3"><a href="#💻-详细编码实操指南-3" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：为自定义类型打通哈希表</strong><br>新建 <code>week11/day04_hash.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 我们的业务对象</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">User</span> &#123;</span><br><span class="line">    std::string name;</span><br><span class="line">    <span class="type">int</span> age;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 必须提供相等比较运算符 (供哈希冲突时二次确认)</span></span><br><span class="line">    <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> User&amp; other) <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> name == other.name &amp;&amp; age == other.age;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 注入 std 命名空间，为 User 提供哈希算法特化</span></span><br><span class="line"><span class="keyword">namespace</span> std &#123;</span><br><span class="line">    <span class="keyword">template</span> &lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">hash</span>&lt;User&gt; &#123;</span><br><span class="line">        <span class="function"><span class="type">size_t</span> <span class="title">operator</span><span class="params">()</span><span class="params">(<span class="type">const</span> User&amp; user)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">            <span class="comment">// 简单的组合哈希策略：把名字的哈希和年龄的哈希异或(XOR)并位移起来</span></span><br><span class="line">            <span class="type">size_t</span> h1 = std::hash&lt;std::string&gt;&#123;&#125;(user.name);</span><br><span class="line">            <span class="type">size_t</span> h2 = std::hash&lt;<span class="type">int</span>&gt;&#123;&#125;(user.age);</span><br><span class="line">            <span class="keyword">return</span> h1 ^ (h2 &lt;&lt; <span class="number">1</span>); </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 现在，你的自定义类完美入驻哈希表！</span></span><br><span class="line">    std::unordered_map&lt;User, std::string&gt; user_sessions;</span><br><span class="line">    </span><br><span class="line">    User u1&#123;<span class="string">&quot;Alice&quot;</span>, <span class="number">25</span>&#125;;</span><br><span class="line">    user_sessions[u1] = <span class="string">&quot;session_token_123&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Alice&#x27;s token: &quot;</span> &lt;&lt; user_sessions[u1] &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>掌握了这个套路，你就能在复杂的业务逻辑中随心所欲地使用高效的哈希缓存。</p>
+<hr>
+<h2 id="Day-5-经验内化与本周复盘"><a href="#Day-5-经验内化与本周复盘" class="headerlink" title="Day 5: 经验内化与本周复盘"></a>Day 5: 经验内化与本周复盘</h2><h3 id="🎯-知识点深度剖析：从“能跑”到“优雅”的蜕变"><a href="#🎯-知识点深度剖析：从“能跑”到“优雅”的蜕变" class="headerlink" title="🎯 知识点深度剖析：从“能跑”到“优雅”的蜕变"></a>🎯 知识点深度剖析：从“能跑”到“优雅”的蜕变</h3><p>这周我们清洗了代码上的坏味道：</p>
+<ul>
+<li>用 <code>auto&amp;</code> 避免了隐藏的拷贝性能杀手。</li>
+<li>加了 <code>noexcept</code> 让容器扩容如丝般顺滑。</li>
+<li>用 <code>&lt;algorithm&gt;</code> 消灭了容易出错的原始循环。</li>
+<li>打通了自定义类的哈希通道。</li>
+</ul>
+<p>现在的你，写出来的业务代码已经具备了大厂高级开发者的整洁度。</p>
+<h3 id="💻-详细编码实操指南-4"><a href="#💻-详细编码实操指南-4" class="headerlink" title="💻 详细编码实操指南"></a>💻 详细编码实操指南</h3><p><strong>任务 1：全局体检</strong><br>把这几周写的 <code>ThreadPool.h</code> 和 <code>AsyncServer.h</code> 等核心组件翻出来。<br>检查一下：</p>
+<ul>
+<li>移动构造函数有没有加上 <code>noexcept</code>？</li>
+<li>遍历 <code>std::map</code> 或 <code>std::vector</code> 时，是不是用了 <code>const auto&amp;</code>？</li>
+<li>如果有可以改进的地方，动手改掉。</li>
+</ul>
+<p><strong>任务 2：提交代码</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .</span><br><span class="line">git commit -m <span class="string">&quot;Week 11: 掌握 Modern C++ 进阶特性，熟练运用 auto、noexcept 与 STL 算法重构代码&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>下周，也就是最后一周！<br>我们将把前面十一周所有的成果：CMake体系、GTest单测、Asio网络框架、ThreadPool线程池、spdlog日志、无锁与分段锁思想、STL优雅用法。全部熔炉重铸，写出一个能在你简历上闪闪发光的大型项目——<strong>可观测的异步 KV 存储服务器</strong>！好好准备迎接最终的挑战！</p>
+<hr>
+<h3 id="📚-《C-11-进阶实战专栏》导航"><a href="#📚-《C-11-进阶实战专栏》导航" class="headerlink" title="📚 《C++11 进阶实战专栏》导航"></a>📚 《C++11 进阶实战专栏》导航</h3><ul>
+<li><a href="/2026/03/05/cpp11-series/plan-12w/" title="C++11 进阶实战专栏：12周学习计划">开篇词：12 周（3 个月）C++11 进阶学习计划</a></li>
+<li><a href="/2026/03/05/cpp11-series/week00/" title="C++11 进阶实战 | Week 00：环境与训练场搭建（磨刀不误砍柴工）">Week 00：环境与训练场搭建（磨刀不误砍柴工）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week01/" title="C++11 进阶实战 | Week 01：并发地基与 STL 失效规则（踩坑的开始）">Week 01：并发地基与 STL 失效规则（踩坑的开始）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week02/" title="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">Week 02：条件变量与 BlockingQueue（工业级组件手写实战）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week03/" title="C++11 进阶实战 | Week 03：future 与 Lambda（异步编程的现代化救赎）">Week 03：future 与 Lambda（异步编程的现代化救赎）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week04/" title="C++11 进阶实战 | Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）">Week 04：智能指针与多线程生命周期迷思（跨越并发分水岭）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week05/" title="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">Week 05：工业级线程池手写实战（ThreadPool）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week06/" title="C++11 进阶实战 | Week 06：原子操作与锁的进阶（无锁编程的深水区）">Week 06：原子操作与锁的进阶（无锁编程的深水区）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week07/" title="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">Week 07：性能诊断与调优（性能榨汁机）</a></li>
+<li><a href="/2026/03/05/cpp11-series/week08/" title="C++11 进阶实战 | Week 08：网络编程与 Boost.Asio 基础思维模型">Week 08：网络编程与 Boost.Asio 基础思维模型</a></li>
+<li><a href="/2026/03/05/cpp11-series/week09/" title="C++11 进阶实战 | Week 09：全异步 TCP Server (百万并发的基石)">Week 09：全异步 TCP Server (百万并发的基石)</a></li>
+<li><a href="/2026/03/05/cpp11-series/week10/" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">Week 10：并发与网络的终极融合（架构分离与背压）</a></li>
+<li>👉 <strong>Week 11：STL 强化与现代 C++ 补漏（写出优雅的代码）</strong> (当前位置)</li>
+<li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
+</ul>
+
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C-11/" rel="tag"># C++11</a>
+              <a href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 后端开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week10/" rel="prev" title="C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 10：并发与网络的终极融合（架构分离与背压）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week12/" rel="next" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">
+                  C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server） <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
