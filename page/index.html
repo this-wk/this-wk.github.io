@@ -216,7 +216,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>这是漫长旅途的最后一周，也是你采摘胜利果实的时候。<br>很多人的简历上写的都是“基于 C++ 实现了增删改查”、“做了一个图书管理系统”。这对于高级岗位来说，太单薄了。</p>
 <p>今天，我们要把前十一周写的所有高难度底层组件全部拼装起来，打造一个类似于微型 Redis 的系统：<strong>异步内存键值存储引擎（Asynchronous Key-Value Server）</strong>。</p>
 <p>它必须具备以下<strong>企业级亮点</strong>：</p>
@@ -309,6 +311,7 @@
 <li>👉 <strong>Week 12：综合实战结业（可观测的异步 KV Server）</strong> (当前位置)</li>
 </ul>
 
+</div>
       
     </div>
 
@@ -385,7 +388,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>过去十周，我们在并发和网络的泥潭里摸爬滚打，追求的是“不死”和“快”。<br>但在企业开发中，代码是写给人看的，只是顺便让机器执行。如果你写出来的代码虽然跑得快，但满篇都是 <code>std::vector&lt;std::map&lt;std::string, int&gt;&gt;::const_iterator it = ...</code> 这种又臭又长的类型，或者几百行的原始 <code>for</code> 循环，你的同事在 Code Review 时是会抓狂的。</p>
 <p>这周我们不讲架构，我们来“洗代码”。<br>现代 C++（C++11&#x2F;14）引入了大量能让代码变得极其优雅的特性和算法。把这周的东西掌握好，你的代码会散发出一股浓浓的“高级感”。</p>
 </blockquote>
@@ -463,6 +468,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -539,7 +545,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>这周是你进阶架构师的必经之路。前九周，我们分别造了两台极其精密的发动机：<br>一台是<strong>多线程计算引擎（ThreadPool）</strong>（负责吃 CPU）；<br>一台是<strong>异步网络 IO 引擎（Asio Server）</strong>（负责吞吐网卡数据）。</p>
 <p>现在我们要把它们拼装成一辆跑车。<br>最经典的工业级架构（也是 Nginx, Redis 6.0+, Node.js 的核心思想）：<strong>Reactor + Worker Pool 模式</strong>。<br><code>io_context</code>（单线程或极少线程）只负责极其轻量级的接客和搬运数据。一旦网络包收齐了，绝对不能在 IO 线程里去解码、查数据库或者做复杂运算！必须立刻把它打包成一个 Task，一脚踢进 <code>ThreadPool</code> 去处理。<br>IO 线程瞬间解脱，去接待下一个客人。</p>
 <p>但跨线程交互有一个致命的坑：业务线程算完结果后，<strong>绝对不能</strong>直接在业务线程里调用 <code>socket.async_write</code>！因为 Asio 的 socket 不是线程安全的！</p>
@@ -610,6 +618,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -686,7 +695,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>上周我们用同步（阻塞）的方式写了一个网络服务器，它简单易懂。但是，同步服务器有一个致命缺陷：一个客户连进来，我们就得为他开一个专门的线程（Thread-per-connection）。</p>
 <p>如果有 1 万个客户连进来，我们就得开 1 万个线程。光是这 1 万个线程的栈内存，就能吃掉你几个 G；更别提 CPU 在这 1 万个线程之间切换时，基本上就不用干正事了，全在做无用功。这就是著名的 <strong>C10K 问题</strong>。</p>
 <p>工业界的终极解法是：<strong>全异步网络模型</strong>。<br>无论你有 1 万个还是 100 万个连接，我都只用极少数的几个线程（甚至只用 1 个线程！）来处理。因为绝大多数连接在绝大多数时间里都在“发呆”（等用户发数据）。我们只要在数据真正到达的那一瞬间，触发一个回调去处理就行了。</p>
@@ -768,6 +779,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -844,7 +856,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到这 12 周计划的下半场。前七周我们把“并发计算”和“底层性能”挖了个底朝天。但一个系统不能只是自己一个人在那儿瞎算，它得和外面通信。</p>
 <p>讲到 C++ 的网络编程，很多人第一时间想到的是底层的 Socket API（<code>socket</code>, <code>bind</code>, <code>listen</code>, <code>accept</code>, <code>epoll/select</code>）。<br>如果你去手写裸 <code>epoll</code>，光是处理“半包&#x2F;粘包”、“非阻塞读写产生的 EAGAIN”、“连接的生命周期”就能让你崩溃。</p>
 <p>现代 C++ 后端工程师的标准做法是：站在巨人的肩膀上。<br><strong>Boost.Asio（Asynchronous Input&#x2F;Output）</strong> 是 C++ 工业界最权威、应用最广的异步网络库。它甚至被提议作为未来 C++ 标准库网络部分的基石。</p>
@@ -919,6 +933,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -995,7 +1010,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>上周我们在 <code>atomic</code> 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：<strong>性能调优</strong>。</p>
 <p>初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。<br>中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 <code>gettimeofday</code> 算一下时间”。<br>高级程序员看到程序跑得慢，什么也不猜，默默打开 <strong><code>perf</code></strong> 采样，生成一张极其炫酷的<strong>火焰图（FlameGraph）</strong>，然后指着图里最宽的那座“山峰”说：“瓶颈在这里，它发生了伪共享（False Sharing），加一行 <code>alignas(64)</code>，性能提升 10 倍”。</p>
 <p>这周，我们将掌握这套降维打击的分析方法。</p>
@@ -1077,6 +1094,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1153,7 +1171,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>过去五周，我们使用的并发防御武器都是 <code>std::mutex</code>（互斥锁）。它非常可靠，但它的代价是：当线程拿不到锁时，会被操作系统挂起，发生<strong>线程上下文切换（Context Switch）</strong>，这个开销在纳秒级的微观世界里是非常巨大的（可能高达几微秒）。</p>
 <p>有没有一种方法，不需要把线程挂起，也能保证对数据的并发读写是绝对安全的？<br>欢迎来到 C++ 并发编程的最深水区：<strong>底层原子操作（Atomic Operations）与内存模型（Memory Model）</strong>。</p>
 <p>在这周，我们将学习如何用硬件级别的支持，抛弃笨重的互斥锁，实现极速的无锁（Lock-free）甚至等待无关（Wait-free）的代码。这是你通往顶级性能优化专家的必经之路，也是 C++ 区别于其他高级语言的硬核底蕴。</p>
@@ -1231,6 +1251,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1307,7 +1328,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。</p>
 <p>在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。<br>如果每来一个请求就 <code>std::thread t(...)</code> 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动&#x2F;销毁”上。<br>线程池的哲学是：提前养一批“打工人（Worker Threads）”，让它们排排坐；外面一旦有任务，就扔进“任务队列”；打工人从队列里抢任务干，干完继续等下一个。</p>
 <p>这周，我们将手把手写出一个带有背压控制、支持任意函数签名、能返回 future 结果的现代 C++ 线程池。这也是大厂最硬核的面试题之一。</p>
@@ -1388,6 +1411,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1464,7 +1488,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>恭喜你坚持到了第四周！前三周我们学会了加锁防竞争、用条件变量同步、用 future 拿结果。这些都是多线程的“术”。</p>
 <p>但在真实的大型 C++ 后端项目中，多线程最让你崩溃的往往不是数据算错了，而是：<strong>“这块内存到底该谁来释放？！”</strong></p>
 <p>想象一下：网络线程接收了一个连接请求，创建了一个 <code>Connection</code> 对象，然后把它扔给了业务线程池去处理；同时，定时器线程还在倒计时，准备在这个连接超时的时候把它关掉。<br>请问，这个 <code>Connection</code> 对象，到底应该由谁去 <code>delete</code>？网络线程？业务线程？还是定时器线程？</p>
@@ -1566,6 +1592,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1642,7 +1669,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>过去两周我们一直在底层打转（锁、条件变量、队列），这些东西很强大，但写起来非常“重”。</p>
 <p>想象一个最常见的业务场景：你在主线程需要调用一个耗时的算法或者发起一个网络请求，你不想阻塞主线程，于是你起了一个子线程去跑。跑完之后，你<strong>该怎么把结果拿回来</strong>？</p>
 <p>在老派 C++ 里，这简直是一场灾难：你要在外面定义一个全局变量（或者传一个指针进去），配上一把 <code>mutex</code>，再配上一个 <code>condition_variable</code>。子线程算完把结果写进变量，然后 <code>notify</code>；主线程在外面 <code>wait</code>，醒了再去读。写这几十行破代码，仅仅是为了拿一个 <code>int</code> 类型的返回值！</p>
@@ -1743,6 +1772,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1819,7 +1849,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。<br>在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。</p>
 <p>如果队列是空的，业务线程该干嘛？写个死循环 <code>while(queue.empty()) &#123; ... &#125;</code> 一直检查吗？那叫 <strong>Busy Waiting（忙等待）</strong>，你的 CPU 占用率会瞬间飙到 100%，不仅浪费电，还把机器卡死。</p>
 <p>这周，我们要学习线程间协作的终极武器：<strong>条件变量（Condition Variable）</strong>。<br>并且，作为这周的结业考试，我会手把手带你写出一个在后端开发中使用频率最高、也是面试手撕代码环节出场率极高的基础组件——<strong>线程安全的阻塞队列（BlockingQueue）</strong>。写好它，你才能算半只脚踏入了并发编程的门。</p>
@@ -1917,6 +1949,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -1993,7 +2026,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到真正的战场。上周我们打造了完美的兵器（CMake + GTest + ASan&#x2F;TSan），这周我们要开始硬核对抗了。<br>并发编程（多线程）是高级 C++ 工程师的试金石。很多人写了几年代码，一遇到多线程问题依然是靠“猜”和“玄学”。为什么会崩溃？为什么数据不对？</p>
 <p>本周我们要解决两个最常见、也是面试必考的“血崩点”：</p>
 <ol>
@@ -2131,6 +2166,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -2207,7 +2243,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>很多新人刚学 C++，上来就抱着《C++ Primer》啃语法，或者直接打开 LeetCode 刷题。结果到了公司，拿到一个几十万行的真实项目时，连怎么把代码编译过去、怎么排查一个诡异的“段错误（Segmentation Fault）”、怎么证明自己的代码比别人的快，都毫无头绪。</p>
 <p>在工业界，<strong>工程能力往往比单纯的语法知识更重要</strong>。我们绝对不会用记事本写完代码然后敲 <code>g++ main.cpp</code> 来跑程序，也不会用 <code>printf(&quot;here1&quot;)</code> 去找内存 Bug。</p>
 <p>本周我们<strong>一行具体的业务逻辑都不写</strong>。这 5 天，我手把手带你搭建一个企业级的现代 C++ 训练场。<br>每天 2 个小时，你需要静下心来。把下面的每一段文字当成我们在工位上的 Code Review 探讨。当你走完这周，你的代码将拥有：自动化构建（CMake）、内存与线程的实时雷达（Sanitizers）、性能分析显微镜（perf）以及自动化测试防线（GTest）。这套脚手架，将是你未来 12 周甚至以后职业生涯的坚实底座。</p>
@@ -2381,6 +2419,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 
@@ -2457,7 +2496,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <blockquote>
+          <div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>约束</strong>：C++11 标准、Linux 服务器；晚间学习时间：2h&#x2F;天（每周 5 天 ≈ 10h）。<br><strong>主线</strong>：并发正确性 → 并发工程化（诊断&#x2F;性能&#x2F;可观测）→ 网络（Boost.Asio）落地。<br><strong>贯穿</strong>：STL（复杂度、失效规则、分配、算法）每周必练。<br><strong>参考书籍</strong>：</p>
 <ol>
 <li>《C++ Concurrency in Action》(C++并发编程实战) 第2版（强烈推荐第2版，代码质量和翻译更好，专注于其中C++11相关的核心章节）</li>
@@ -2818,6 +2859,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
       
     </div>
 

@@ -19,15 +19,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="来自老工程师的嘱托：上周我们在 atomic 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：性能调优。 初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 gettimeofday 算一下时间”。高级程序员看到程序跑得慢，什么也不猜，默默打开 perf 采样，生成一张极其炫酷的火焰图（FlameG">
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：上周我们在 atomic 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：性能调优。 初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 gettimeofday 算一下时间”。高级程序员看到程序跑得慢，什么也不猜，默默打开 perf 采样，生成">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++11 进阶实战 | Week 07：性能诊断与调优（性能榨汁机）">
 <meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week07/index.html">
 <meta property="og:site_name" content="wwk&#39;s blog">
-<meta property="og:description" content="来自老工程师的嘱托：上周我们在 atomic 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：性能调优。 初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 gettimeofday 算一下时间”。高级程序员看到程序跑得慢，什么也不猜，默默打开 perf 采样，生成一张极其炫酷的火焰图（FlameG">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：上周我们在 atomic 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：性能调优。 初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 gettimeofday 算一下时间”。高级程序员看到程序跑得慢，什么也不猜，默默打开 perf 采样，生成">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-05T02:08:00.000Z">
-<meta property="article:modified_time" content="2026-03-05T10:18:43.960Z">
+<meta property="article:modified_time" content="2026-03-06T00:57:41.961Z">
 <meta property="article:author" content="wwk">
 <meta property="article:tag" content="C++11">
 <meta property="article:tag" content="后端开发">
@@ -221,7 +221,9 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><blockquote>
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>上周我们在 <code>atomic</code> 的深水区里游了一圈，脑细胞死伤无数。这周我们换换脑子，做点非常有成就感的事情：<strong>性能调优</strong>。</p>
 <p>初级程序员看到程序跑得慢，第一反应是：“加配置！堆机器！”。<br>中级程序员看到程序跑得慢，第一反应是：“我猜这里慢，我加个 <code>gettimeofday</code> 算一下时间”。<br>高级程序员看到程序跑得慢，什么也不猜，默默打开 <strong><code>perf</code></strong> 采样，生成一张极其炫酷的<strong>火焰图（FlameGraph）</strong>，然后指着图里最宽的那座“山峰”说：“瓶颈在这里，它发生了伪共享（False Sharing），加一行 <code>alignas(64)</code>，性能提升 10 倍”。</p>
 <p>这周，我们将掌握这套降维打击的分析方法。</p>
@@ -303,6 +305,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
     </div>
 
     

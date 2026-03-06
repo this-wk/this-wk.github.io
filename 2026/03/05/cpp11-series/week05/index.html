@@ -19,15 +19,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动">
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++11 进阶实战 | Week 05：工业级线程池手写实战（ThreadPool）">
 <meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week05/index.html">
 <meta property="og:site_name" content="wwk&#39;s blog">
-<meta property="og:description" content="来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。 在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。如果每来一个请求就 std::thread t(...) 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-05T02:06:00.000Z">
-<meta property="article:modified_time" content="2026-03-05T10:18:43.935Z">
+<meta property="article:modified_time" content="2026-03-06T00:57:41.924Z">
 <meta property="article:author" content="wwk">
 <meta property="article:tag" content="C++11">
 <meta property="article:tag" content="后端开发">
@@ -221,7 +221,9 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><blockquote>
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>欢迎来到第五周。前四周我们把砖块（锁、条件变量、队列、智能指针、future）都烧好了，现在我们要开始盖大厦了。</p>
 <p>在任何一个高并发的后端服务（如 Web 服务器、游戏服务器）中，**线程池（ThreadPool）**都是绝对的心脏。<br>如果每来一个请求就 <code>std::thread t(...)</code> 新建一个线程，用完就销毁，频繁的系统调用和上下文切换会把 CPU 的算力全部浪费在“启动&#x2F;销毁”上。<br>线程池的哲学是：提前养一批“打工人（Worker Threads）”，让它们排排坐；外面一旦有任务，就扔进“任务队列”；打工人从队列里抢任务干，干完继续等下一个。</p>
 <p>这周，我们将手把手写出一个带有背压控制、支持任意函数签名、能返回 future 结果的现代 C++ 线程池。这也是大厂最硬核的面试题之一。</p>
@@ -302,6 +304,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
     </div>
 
     

@@ -19,15 +19,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="来自老工程师的嘱托：上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。 如果队列是空的，业务线程该干嘛？写个死循环 while(queue.empty()) &#123; ... &#125; 一直检查吗">
+    <meta name="description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。 如果队列是空的，业务线程该干嘛？写个死循环 while(queue.empty()) &#123;">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++11 进阶实战 | Week 02：条件变量与 BlockingQueue（工业级组件手写实战）">
 <meta property="og:url" content="https://this-wk.github.io/2026/03/05/cpp11-series/week02/index.html">
 <meta property="og:site_name" content="wwk&#39;s blog">
-<meta property="og:description" content="来自老工程师的嘱托：上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。 如果队列是空的，业务线程该干嘛？写个死循环 while(queue.empty()) &#123; ... &#125; 一直检查吗">
+<meta property="og:description" content="🚀 C++11 进阶实战专栏  来自老工程师的嘱托：上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。 如果队列是空的，业务线程该干嘛？写个死循环 while(queue.empty()) &#123;">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-03-05T02:03:00.000Z">
-<meta property="article:modified_time" content="2026-03-05T10:18:43.900Z">
+<meta property="article:modified_time" content="2026-03-06T00:57:41.888Z">
 <meta property="article:author" content="wwk">
 <meta property="article:tag" content="C++11">
 <meta property="article:tag" content="后端开发">
@@ -221,7 +221,9 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><blockquote>
+    <div class="post-body" itemprop="articleBody"><div class="cpp11-series-wrapper">
+<div class="cpp11-series-badge">🚀 C++11 进阶实战专栏</div>
+<blockquote>
 <p><strong>来自老工程师的嘱托</strong>：<br>上周我们学会了用“锁”来防止多个线程互相踩踏。但这还不够。<br>在真实的后端系统中，线程之间不仅要“防备”对方，更需要**“协作”**。比如经典的“生产者-消费者”模型：网络线程收到了数据（生产），把它塞进队列；业务线程（消费）从队列里拿数据去处理。</p>
 <p>如果队列是空的，业务线程该干嘛？写个死循环 <code>while(queue.empty()) &#123; ... &#125;</code> 一直检查吗？那叫 <strong>Busy Waiting（忙等待）</strong>，你的 CPU 占用率会瞬间飙到 100%，不仅浪费电，还把机器卡死。</p>
 <p>这周，我们要学习线程间协作的终极武器：<strong>条件变量（Condition Variable）</strong>。<br>并且，作为这周的结业考试，我会手把手带你写出一个在后端开发中使用频率最高、也是面试手撕代码环节出场率极高的基础组件——<strong>线程安全的阻塞队列（BlockingQueue）</strong>。写好它，你才能算半只脚踏入了并发编程的门。</p>
@@ -319,6 +321,7 @@
 <li><a href="/2026/03/05/cpp11-series/week12/" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">Week 12：综合实战结业（可观测的异步 KV Server）</a></li>
 </ul>
 
+</div>
     </div>
 
     

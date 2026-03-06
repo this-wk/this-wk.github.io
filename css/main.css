@@ -2576,3 +2576,50 @@ body,
 .headband {
   display: none !important;
 }
+.cpp11-series-wrapper {
+  background-color: #fafbfc;
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+  padding: 30px 40px;
+  margin-top: 20px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.03);
+  font-family: "Cascadia Code", "Fira Code", "Consolas", monospace, "Microsoft YaHei";
+}
+.cpp11-series-wrapper h2,
+.cpp11-series-wrapper h3 {
+  color: #1a5276;
+  border-bottom: 2px dashed #d4e6f1;
+  padding-bottom: 10px;
+  margin-top: 30px;
+}
+.cpp11-series-wrapper blockquote {
+  background: #f0f7ff;
+  border-left: 5px solid #3498db;
+  color: #2c3e50;
+  padding: 15px 20px;
+  border-radius: 0 8px 8px 0;
+  font-style: normal;
+}
+.cpp11-series-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #2980b9, #6dd5ed);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1.1em;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 10px rgba(41,128,185,0.3);
+  letter-spacing: 1px;
+}
+/* �ײ������������� */
+.cpp11-series-wrapper ul {
+  background: #fff;
+  padding: 20px 20px 20px 40px;
+  border-radius: 8px;
+  border: 1px solid #ebedef;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.cpp11-series-wrapper ul li {
+  margin-bottom: 8px;
+}
