@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="导语：为什么要折腾这套流水线？三月份我的饭搭子球搭子离职了，雪上加霜的是他的工作一部分也分给了我。别的还好说，就是每次提版本时打的包实在是太多了。如果全靠手动开虚拟机、拉 SVN 代码、敲 make 编译再打包，不仅耗时耗力，而且极易出错。 为了彻底解决这个“体力活”，一劳永逸地提升交付效率，我决定从 0 到 1 搭建一套基于 Docker 容器化环境隔离 + Jenkins 并行调度 + Har">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录">
+<meta property="og:url" content="https://this-wk.github.io/2026/03/31/%E7%89%9B%E9%A9%AC%E7%9A%84%E6%8C%A3%E6%89%8E%E4%B9%8B%E6%89%93%E5%8C%85%E7%AF%87/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="导语：为什么要折腾这套流水线？三月份我的饭搭子球搭子离职了，雪上加霜的是他的工作一部分也分给了我。别的还好说，就是每次提版本时打的包实在是太多了。如果全靠手动开虚拟机、拉 SVN 代码、敲 make 编译再打包，不仅耗时耗力，而且极易出错。 为了彻底解决这个“体力活”，一劳永逸地提升交付效率，我决定从 0 到 1 搭建一套基于 Docker 容器化环境隔离 + Jenkins 并行调度 + Har">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-03-30T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-31T02:14:42.029Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="Jenkins">
+<meta property="article:tag" content="Harbor">
+<meta property="article:tag" content="CI&#x2F;CD">
+<meta property="article:tag" content="自动化">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/03/31/%E7%89%9B%E9%A9%AC%E7%9A%84%E6%8C%A3%E6%89%8E%E4%B9%8B%E6%89%93%E5%8C%85%E7%AF%87/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/03/31/%E7%89%9B%E9%A9%AC%E7%9A%84%E6%8C%A3%E6%89%8E%E4%B9%8B%E6%89%93%E5%8C%85%E7%AF%87/","path":"2026/03/31/牛马的挣扎之打包篇/","title":"一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录 | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E8%AF%AD%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%98%E8%85%BE%E8%BF%99%E5%A5%97%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">导语：为什么要折腾这套流水线？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%A6%82%E8%A7%88"><span class="nav-number">2.</span> <span class="nav-text">核心架构概览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81-%E5%9F%BA%E7%9F%B3%E6%9E%84%E5%BB%BA%EF%BC%9A%E4%BB%8E-ISO-%E7%B3%BB%E7%BB%9F%E9%95%9C%E5%83%8F%E5%88%B0-Docker-%E7%BC%96%E8%AF%91%E9%95%9C%E5%83%8F"><span class="nav-number">3.</span> <span class="nav-text">一、 基石构建：从 ISO 系统镜像到 Docker 编译镜像</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E4%BB%8E-ISO-%E6%8F%90%E5%8F%96-Rootfs-%E6%A0%B9%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">3.1.</span> <span class="nav-text">1. 手把手教你从 ISO 提取 Rootfs (根文件系统)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%B6%E4%BD%9C%E5%AE%8C%E6%95%B4%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83%E9%95%9C%E5%83%8F%E7%9A%84%E4%B8%A4%E7%A7%8D%E5%A7%BF%E5%8A%BF"><span class="nav-number">3.2.</span> <span class="nav-text">2. 制作完整编译环境镜像的两种姿势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81-%E5%BC%B9%E8%8D%AF%E5%BA%93%EF%BC%9AHarbor-%E4%BB%93%E5%BA%93%E7%9A%84%E6%90%AD%E5%BB%BA%E4%B8%8E%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">二、 弹药库：Harbor 仓库的搭建与使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%AF%A6%E7%BB%86%E6%90%AD%E5%BB%BA%E4%B8%8E-harbor-yml-%E9%85%8D%E7%BD%AE"><span class="nav-number">4.1.</span> <span class="nav-text">1. 详细搭建与 harbor.yml 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%95%9C%E5%83%8F%E7%9A%84%E4%B8%8A%E4%BC%A0%E4%B8%8E%E6%8B%89%E5%8F%96"><span class="nav-number">4.2.</span> <span class="nav-text">2. 镜像的上传与拉取</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81-%E5%A4%A7%E8%84%91%E4%B8%AD%E6%9E%A2%EF%BC%9AJenkins-%E7%9A%84%E7%A6%BB%E7%BA%BF%E9%83%A8%E7%BD%B2%E4%B8%8E%E8%8A%82%E7%82%B9%E6%8E%A5%E5%85%A5"><span class="nav-number">5.</span> <span class="nav-text">三、 大脑中枢：Jenkins 的离线部署与节点接入</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%A4%96%E7%BD%91%E5%88%B6%E4%BD%9C-Jenkins-%E7%A6%BB%E7%BA%BF%E9%95%9C%E5%83%8F-%E5%8C%85%E5%90%AB%E6%A0%B8%E5%BF%83%E6%8F%92%E4%BB%B6"><span class="nav-number">5.1.</span> <span class="nav-text">1. 外网制作 Jenkins 离线镜像 (包含核心插件)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8E%A5%E5%85%A5%E7%BC%96%E8%AF%91%E8%8A%82%E7%82%B9-SSH-Node"><span class="nav-number">5.2.</span> <span class="nav-text">2. 接入编译节点 (SSH Node)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81-%E6%A0%B8%E5%BF%83%E5%8F%8C%E5%BC%95%E6%93%8E%EF%BC%9A%E5%8F%8C%E8%84%9A%E6%9C%AC%E8%A7%A3%E6%9E%90"><span class="nav-number">6.</span> <span class="nav-text">四、 核心双引擎：双脚本解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%A4%96%E5%B1%82%E6%8E%A7%E5%88%B6%E6%9D%83%EF%BC%9AJenkinsfile-%E5%A3%B0%E6%98%8E%E5%BC%8F%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-number">6.1.</span> <span class="nav-text">1. 外层控制权：Jenkinsfile (声明式流水线)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%86%85%E5%B1%82%E8%8B%A6%E5%8A%9B%E5%B7%A5%EF%BC%9Aauto-build-sh-%E5%BA%95%E5%B1%82%E6%89%93%E5%8C%85%E8%84%9A%E6%9C%AC"><span class="nav-number">6.2.</span> <span class="nav-text">2. 内层苦力工：auto_build.sh (底层打包脚本)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81-%E8%A1%80%E6%B3%AA%E6%80%BB%E7%BB%93%EF%BC%9A%E5%AE%9E%E6%88%98%E4%B8%AD%E7%9A%84%E9%AB%98%E9%A2%91%E9%81%BF%E5%9D%91%E6%8C%87%E5%8D%97"><span class="nav-number">7.</span> <span class="nav-text">五、 血泪总结：实战中的高频避坑指南</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9D%91%E4%B8%80%EF%BC%9ADocker-TTY-%E9%99%90%E5%88%B6%E5%AF%BC%E8%87%B4%E7%9A%84%E2%80%9C%E7%A7%92%E6%8C%82%E5%81%87%E6%88%90%E5%8A%9F%E2%80%9D"><span class="nav-number">7.1.</span> <span class="nav-text">坑一：Docker TTY 限制导致的“秒挂假成功”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9D%91%E4%BA%8C%EF%BC%9A%E5%BA%95%E5%B1%82-Bash-%E7%9A%84-Bad-substitution-%E6%8A%A5%E9%94%99"><span class="nav-number">7.2.</span> <span class="nav-text">坑二：底层 Bash 的 Bad substitution 报错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9D%91%E4%B8%89%EF%BC%9A%E8%91%97%E5%90%8D%E7%9A%84%E2%80%9CRoot-%E5%B9%BD%E7%81%B5%E2%80%9D-%E6%96%87%E4%BB%B6%E6%9D%83%E9%99%90%E5%86%B2%E7%AA%81"><span class="nav-number">7.3.</span> <span class="nav-text">坑三：著名的“Root 幽灵” (文件权限冲突)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">8.</span> <span class="nav-text">结语</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/03/31/%E7%89%9B%E9%A9%AC%E7%9A%84%E6%8C%A3%E6%89%8E%E4%B9%8B%E6%89%93%E5%8C%85%E7%AF%87/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录 | wwk's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-31 00:00:00" itemprop="dateCreated datePublished" datetime="2026-03-31T00:00:00+08:00">2026-03-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF%E6%95%99%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">技术教程</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="导语：为什么要折腾这套流水线？"><a href="#导语：为什么要折腾这套流水线？" class="headerlink" title="导语：为什么要折腾这套流水线？"></a>导语：为什么要折腾这套流水线？</h2><p>三月份我的饭搭子球搭子离职了，雪上加霜的是他的工作一部分也分给了我。别的还好说，就是每次提版本时打的包实在是太多了。如果全靠手动开虚拟机、拉 SVN 代码、敲 <code>make</code> 编译再打包，不仅耗时耗力，而且极易出错。</p>
+<p>为了彻底解决这个“体力活”，一劳永逸地提升交付效率，我决定从 0 到 1 搭建一套基于 <strong>Docker 容器化环境隔离</strong> + <strong>Jenkins 并行调度</strong> + <strong>Harbor 私有镜像仓</strong> 的完全自动化 CI&#x2F;CD 流水线。</p>
+<p>本文将复盘整个搭建全过程，并附上核心脚本与踩坑记录，希望能帮助到团队后续的维护同学，以及正在折腾构建系统的你。</p>
+<hr>
+<h2 id="核心架构概览"><a href="#核心架构概览" class="headerlink" title="核心架构概览"></a>核心架构概览</h2><p>在这套流水线中，各个组件各司其职：</p>
+<ul>
+<li><strong>基础环境层 (Docker)</strong>：利用 Docker 容器的轻量级和隔离性，为每个目标系统制作专属的纯净编译环境镜像，实现一台物理机同时跑多个不同的操作系统。</li>
+<li><strong>存储分发层 (Harbor)</strong>：搭建企业内网私有仓库。统一存储和分发上述做好的基础镜像，方便团队复用（毕竟这些镜像的制作和配置还是比较费时间的）。</li>
+<li><strong>调度控制层 (Jenkins)</strong>：作为流水线的“大脑”，通过 SSH 连入编译节点，提供可视化的按需参数化构建，并控制多个系统的容器<strong>并发启动</strong>，最后统一收集编译产物（<code>.deb</code> &#x2F; <code>.rpm</code> &#x2F; <code>run</code> 包）。</li>
+</ul>
+<hr>
+<h2 id="一、-基石构建：从-ISO-系统镜像到-Docker-编译镜像"><a href="#一、-基石构建：从-ISO-系统镜像到-Docker-编译镜像" class="headerlink" title="一、 基石构建：从 ISO 系统镜像到 Docker 编译镜像"></a>一、 基石构建：从 ISO 系统镜像到 Docker 编译镜像</h2><p>要用 Docker 编译国产系统代码，首先得有对应的基础镜像。由于公有云仓库往往缺乏特定版本（尤其是内网特定 SP 版本）的国产 OS 镜像，我们需要手动从光盘 ISO 镜像中“榨”出系统底包。</p>
+<h3 id="1-手把手教你从-ISO-提取-Rootfs-根文件系统"><a href="#1-手把手教你从-ISO-提取-Rootfs-根文件系统" class="headerlink" title="1. 手把手教你从 ISO 提取 Rootfs (根文件系统)"></a>1. 手把手教你从 ISO 提取 Rootfs (根文件系统)</h3><p>这部分网上的教程往往语焉不详，其实核心原理就是把 ISO 里自带的 Live 系统文件提取出来打包给 Docker。</p>
+<p><strong>Step 1：挂载 ISO 镜像</strong> 找一台 Linux 服务器，把下载好的系统镜像（比如麒麟 V10 的 ISO）放进去，创建一个挂载点并挂载：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p /mnt/iso</span><br><span class="line">mount -o loop Kylin-Desktop-V10-SP1.iso /mnt/iso</span><br></pre></td></tr></table></figure>
+
+<p><strong>Step 2：寻找并解压 Squashfs 文件</strong> 进入挂载目录，你需要找到一个体积最大的核心系统压缩文件，通常叫 <code>squashfs.img</code> 或者 <code>filesystem.squashfs</code>（一般藏在 <code>casper/</code> 或 <code>LiveOS/</code> 目录下）：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /mnt/iso/casper/  # 具体目录根据不同系统 ISO 可能不同</span><br></pre></td></tr></table></figure>
+
+<p>接下来，我们需要用 <code>unsquashfs</code> 工具把它解压出来（如果提示没有该命令，先执行 <code>apt install squashfs-tools</code> 或 <code>yum install squashfs-tools</code> 安装）：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unsquashfs filesystem.squashfs</span><br></pre></td></tr></table></figure>
+
+<p>执行完后，当前目录下会生成一个名为 <code>squashfs-root</code> 的文件夹，这就是一个完整的、原汁原味的 Linux 根目录（里面有 <code>bin</code>、<code>etc</code>、<code>lib</code> 等）。</p>
+<p><strong>Step 3：打包并导入 Docker</strong> 进入解压出来的根目录，将其打包并直接通过管道“喂”给 Docker：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 注意命令最后的点号 &#x27;.&#x27; 代表当前目录下的所有文件</span><br><span class="line">tar -C squashfs-root -c . | docker import - my-kylin-base:v1</span><br></pre></td></tr></table></figure>
+
+<p>测试一下是否成功：<code>docker run -it my-kylin-base:v1 /bin/bash</code>，如果顺利进入终端，恭喜你，基础底包制作成功！清理战场：<code>umount /mnt/iso</code>。</p>
+<h3 id="2-制作完整编译环境镜像的两种姿势"><a href="#2-制作完整编译环境镜像的两种姿势" class="headerlink" title="2. 制作完整编译环境镜像的两种姿势"></a>2. 制作完整编译环境镜像的两种姿势</h3><p>拿到纯净版基础镜像后，需要安装 <code>gcc</code>、<code>cmake</code>、<code>svn</code> 等编译依赖（由于内网源的特殊性，这一步往往需要特别配置）。</p>
+<p><strong>方式 A：交互式构建 (<code>docker run</code> + <code>commit</code>) —— 适合前期摸索（快速但不规范-我是用的这种-因为还要进去配源）</strong></p>
+<ul>
+<li><strong>操作</strong>：直接拉起容器进终端 <code>docker run -it my-kylin-base:v1 /bin/bash</code>。</li>
+<li><strong>配置</strong>：在里面手动敲 <code>apt update</code>、安装依赖、配置环境变量（感谢之前同事提供的内网源配置）。</li>
+<li><strong>保存</strong>：退出容器后，找到刚退出的容器 ID，执行 <code>docker commit &lt;容器ID&gt; 10.x.x.x:8001/library/kylin-build:v1</code> 保存为新镜像。</li>
+<li><strong>评价</strong>：操作直观，所见即所得；但过程不可复现，如果未来换源或者升级依赖，还得从头再来，俗称“黑盒镜像”。</li>
+</ul>
+<p><strong>方式 B：声明式构建 (<code>Dockerfile</code>) -推荐</strong></p>
+<ul>
+<li><p><strong>操作</strong>：找个空目录，编写 <code>Dockerfile</code> 脚本。将内网源配置文件提前放在同级目录，通过 <code>COPY</code> 拷入。</p>
+<p>Dockerfile</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM my-kylin-base:v1</span><br><span class="line"># 替换内网源（假设当前目录有 sources.list）</span><br><span class="line">COPY sources.list /etc/apt/sources.list</span><br><span class="line">RUN apt-get update &amp;&amp; apt-get install -y gcc g++ cmake subversion</span><br><span class="line">ENV LANG=zh_CN.UTF-8</span><br><span class="line">CMD [&quot;/bin/bash&quot;]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>构建</strong>：<code>docker build -t 10.x.x.x:8001/library/kylin-build:v2 .</code></p>
+</li>
+<li><p><strong>评价</strong>：属于理想很丰满现实很骨感那种，前期写起来需要多次调试比较麻烦，不过一旦摸索出完美的配置，后边可以复用起来。</p>
+</li>
+</ul>
+<hr>
+<h2 id="二、-弹药库：Harbor-仓库的搭建与使用"><a href="#二、-弹药库：Harbor-仓库的搭建与使用" class="headerlink" title="二、 弹药库：Harbor 仓库的搭建与使用"></a>二、 弹药库：Harbor 仓库的搭建与使用</h2><p>为了让内网的多台编译机都能快速拉取镜像，搭建私有 Harbor 仓库是必经之路。</p>
+<h3 id="1-详细搭建与-harbor-yml-配置"><a href="#1-详细搭建与-harbor-yml-配置" class="headerlink" title="1. 详细搭建与 harbor.yml 配置"></a>1. 详细搭建与 harbor.yml 配置</h3><p>从 Harbor 官方下载离线安装包（offline installer）并解压后，最重要的一步就是修改配置文件。</p>
+<ol>
+<li><p>复制模板文件：<code>cp harbor.yml.tmpl harbor.yml</code></p>
+</li>
+<li><p>使用 vim 编辑 <code>harbor.yml</code>，重点修改以下几个地方：</p>
+<p>YAML</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># 1. 主机名：必须改成你服务器的真实内网 IP，千万不要用 localhost 或 127.0.0.1</span><br><span class="line">hostname: 10.*.*.*</span><br><span class="line"></span><br><span class="line"># 2. HTTP 端口：默认 80，如果被占用了可以改，比如改成 8001</span><br><span class="line">http:</span><br><span class="line">  port: 8001</span><br><span class="line"></span><br><span class="line"># 3. HTTPS 配置：【关键避坑】因为我们是纯内网环境，没有搞 SSL 证书，</span><br><span class="line"># 所以必须把 https: 及其下面的 port, certificate, private_key 这几行全部注释掉或删掉！</span><br><span class="line"># https:</span><br><span class="line">#   port: 443</span><br><span class="line">#   certificate: /your/certificate/path</span><br><span class="line">#   private_key: /your/private/key/path</span><br><span class="line"></span><br><span class="line"># 4. 管理员密码：设置一个你能记住的密码</span><br><span class="line">harbor_admin_password: YourStrongPassword</span><br><span class="line"></span><br><span class="line"># 5. 数据存放路径：一定要改到一个磁盘空间足够大的目录</span><br><span class="line">data_volume: /data/harbor_data</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>运行准备脚本生成配置：<code>./prepare</code></p>
+</li>
+<li><p>一键拉起所有服务：<code>./install.sh</code></p>
+</li>
+</ol>
+<h3 id="2-镜像的上传与拉取"><a href="#2-镜像的上传与拉取" class="headerlink" title="2. 镜像的上传与拉取"></a>2. 镜像的上传与拉取</h3><ul>
+<li><p><strong>致命踩坑</strong>：因为我们用的是无证书的 HTTP 部署，必须在所有需要连接 Harbor 的宿主机（包括你的编译机）上的 <code>/etc/docker/daemon.json</code> 中配置信任该仓库：</p>
+<p>JSON</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;insecure-registries&quot;: [&quot;10.*.*.*:8001&quot;]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>配置完别忘了重启 Docker 服务：<code>systemctl restart docker</code>。</p>
+</li>
+<li><p><strong>上传流程</strong>：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 1. 登录 Harbor (输入你配置的 admin 账号密码)</span><br><span class="line">docker login 10.*.*.*:8001</span><br><span class="line"># 2. 按规范打标签 (镜像名必须以你的仓库地址开头)</span><br><span class="line">docker tag kylin-build:v2 10.*.*.*:8001/library/kylin-build:v2</span><br><span class="line"># 3. 推送镜像到仓库</span><br><span class="line">docker push 10.*.*.*:8001/library/kylin-build:v2</span><br></pre></td></tr></table></figure></li>
+</ul>
+<hr>
+<h2 id="三、-大脑中枢：Jenkins-的离线部署与节点接入"><a href="#三、-大脑中枢：Jenkins-的离线部署与节点接入" class="headerlink" title="三、 大脑中枢：Jenkins 的离线部署与节点接入"></a>三、 大脑中枢：Jenkins 的离线部署与节点接入</h2><h3 id="1-外网制作-Jenkins-离线镜像-包含核心插件"><a href="#1-外网制作-Jenkins-离线镜像-包含核心插件" class="headerlink" title="1. 外网制作 Jenkins 离线镜像 (包含核心插件)"></a>1. 外网制作 Jenkins 离线镜像 (包含核心插件)</h3><p>因为目标服务器断网，如果直接在内网装原生 Jenkins，你会被无数个安装失败的插件逼疯。最优雅的方式是在有网的电脑上，把 Jenkins 连同我们需要的插件，一起打包成离线 Docker 镜像。</p>
+<p><strong>在有网的电脑上操作：</strong> 新建一个 <code>Dockerfile</code>，填入以下内容：</p>
+<p>Dockerfile</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FROM jenkins/jenkins:lts</span><br><span class="line"># 切换为 jenkins 用户下载插件</span><br><span class="line">USER jenkins</span><br><span class="line"># 提前下载这几个核心流水线、SSH 节点和 SVN 密码管理必备的插件</span><br><span class="line">RUN jenkins-plugin-cli --plugins &quot;workflow-aggregator ssh-slaves blueocean subversion credentials-binding&quot;</span><br></pre></td></tr></table></figure>
+
+<p>执行编译并导出镜像：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker build -t my-jenkins-offline:v1 .</span><br><span class="line">docker save -o jenkins_offline.tar my-jenkins-offline:v1</span><br></pre></td></tr></table></figure>
+
+<p><strong>在内网服务器上操作：</strong> 把 <code>jenkins_offline.tar</code> 传进内网并导入：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker load -i jenkins_offline.tar</span><br><span class="line"># 启动时务必注意宿主机端口冲突（比如常见的 8080 被占用，换成 8088）</span><br><span class="line">docker run -d --name jenkins --restart=always -p 8088:8080 -v /data/jenkins_home:/var/jenkins_home my-jenkins-offline:v1</span><br></pre></td></tr></table></figure>
+
+<p>打开网页后，<strong>直接选择“跳过插件安装”</strong>（因为我们已经提前打在镜像里了），创建管理员账号即可进入主页。</p>
+<h3 id="2-接入编译节点-SSH-Node"><a href="#2-接入编译节点-SSH-Node" class="headerlink" title="2. 接入编译节点 (SSH Node)"></a>2. 接入编译节点 (SSH Node)</h3><p>Jenkins 自身不干重活，需要通过 SSH 将任务下发给真实的飞腾&#x2F;x86 编译物理机。</p>
+<ul>
+<li><strong>核心配置</strong>：在节点管理中，选择 <code>Launch agents via SSH</code>，填入编译机 IP 和普通账号（如 <code>zhongfu</code>）凭据。一定要将 <code>Host Key Verification Strategy</code> 设置为 <code>Non verifying</code> 以免因为找不到 SSH 指纹报错。</li>
+<li><strong>高频踩坑 1 (Java 版本冲突)</strong>：Jenkins 需要向节点推送 <code>remoting.jar</code> 通讯程序，较新的 Jenkins 要求节点机器必须有 <strong>Java 17</strong>。老机器自带的 Java 8 会直接导致连接失败。解决方法是下载免安装版的 JDK17 离线包解压到编译机，并在 Jenkins 节点设置的 <code>Advanced -&gt; JavaPath</code> 中精准指定新版 Java 路径（例如 <code>/usr/local/jdk-17/bin/java</code>）。</li>
+<li><strong>高频踩坑 2 (Docker 权限)</strong>：使用普通账号连接节点跑代码时，必须将该账号加入 docker 组 (<code>sudo usermod -aG docker zhongfu</code>)，否则 Jenkins 一调 Docker 就会报 <code>permission denied</code> 惨遭拒绝。</li>
+</ul>
+<hr>
+<h2 id="四、-核心双引擎：双脚本解析"><a href="#四、-核心双引擎：双脚本解析" class="headerlink" title="四、 核心双引擎：双脚本解析"></a>四、 核心双引擎：双脚本解析</h2><p>整个自动化的灵魂在于“内外两层”脚本的完美配合。</p>
+<h3 id="1-外层控制权：Jenkinsfile-声明式流水线"><a href="#1-外层控制权：Jenkinsfile-声明式流水线" class="headerlink" title="1. 外层控制权：Jenkinsfile (声明式流水线)"></a>1. 外层控制权：Jenkinsfile (声明式流水线)</h3><p>这是运行在 Jenkins 上的 Groovy 脚本，负责<strong>可视化按需调度、并发控制和 SVN 密码保护</strong>。</p>
+<p>Groovy</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">pipeline &#123;</span><br><span class="line">    agent &#123; label &#x27;build-server&#x27; &#125; // 精准空降到你配置好的编译机节点</span><br><span class="line">    parameters &#123;</span><br><span class="line">        // 提供 Web 界面上的可视化勾选框和输入框，想编哪个勾哪个</span><br><span class="line">        string(name: &#x27;B_VERSION&#x27;, defaultValue: &#x27;V0.*.*.*&#x27;, description: &#x27;打包版本号&#x27;)</span><br><span class="line">        booleanParam(name: &#x27;BUILD_KYLIN&#x27;, defaultValue: true, description: &#x27;编译: debian&#x27;)</span><br><span class="line">        booleanParam(name: &#x27;BUILD_UOS&#x27;, defaultValue: true, description: &#x27;编译: UOS&#x27;)</span><br><span class="line">    &#125;</span><br><span class="line">    environment &#123;</span><br><span class="line">        // 安全获取 SVN 密码，通过 Jenkins 的 Credentials 管理，绝不把明文密码写在脚本里</span><br><span class="line">        SVN_CREDS = credentials(&#x27;svn-account&#x27;) </span><br><span class="line">    &#125;</span><br><span class="line">    stages &#123;</span><br><span class="line">        stage(&#x27;多系统并行编译&#x27;) &#123;</span><br><span class="line">            parallel &#123; // 并行语法，瞬间拉满机器 CPU，极大缩短总时间</span><br><span class="line">                stage(&#x27;debian&#x27;) &#123;</span><br><span class="line">                    when &#123; expression &#123; params.BUILD_KYLIN &#125; &#125; // 读取界面参数，决定是否执行</span><br><span class="line">                    steps &#123;</span><br><span class="line">                        // 强烈建议加上 #!/bin/bash，强制使用完整 Bash 环境</span><br><span class="line">                        sh &quot;&quot;&quot;#!/bin/bash</span><br><span class="line">                            cd /data/build/kylin</span><br><span class="line">                            # 使用 sed 将 Jenkins 变量动态注入配置文件</span><br><span class="line">                            # 注意：由于 Groovy 和 Bash 变量语法的冲突，这里 sed 最外层使用单引号最稳妥</span><br><span class="line">                            sed -i &#x27;s|^VERSION=.*|VERSION=&quot;$&#123;params.B_VERSION&#125;&quot;|g&#x27; config.ini</span><br><span class="line">                            bash auto_build.sh</span><br><span class="line">                        &quot;&quot;&quot;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                // ... 平行复制其他系统 stage</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        stage(&#x27;产物归档&#x27;) &#123;</span><br><span class="line">            steps &#123;</span><br><span class="line">                // 自动收集各系统生成的安装包，方便在网页端一键下载</span><br><span class="line">                archiveArtifacts artifacts: &#x27;**/out/*.deb&#x27;, allowEmptyArchive: true</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-内层苦力工：auto-build-sh-底层打包脚本"><a href="#2-内层苦力工：auto-build-sh-底层打包脚本" class="headerlink" title="2. 内层苦力工：auto_build.sh (底层打包脚本)"></a>2. 内层苦力工：<code>auto_build.sh</code> (底层打包脚本)</h3><p>这是真正跑在宿主机目录里，负责拉起 Docker 容器执行脏活累活的脚本。 核心逻辑非常干脆：</p>
+<ol>
+<li><code>svn update</code> 更新最新代码。</li>
+<li>启动对应系统的纯净镜像：<code>docker run --rm -v /data:/workspace 10.*.*.*:8001/library/kylin-build:v2 bash -c &quot;cd /workspace &amp;&amp; make&quot;</code></li>
+<li>将编译出的文件打包成 <code>.deb</code>、<code>.rpm</code> 或最终压制成自解压的 <code>run</code> 包。</li>
+</ol>
+<hr>
+<h2 id="五、-血泪总结：实战中的高频避坑指南"><a href="#五、-血泪总结：实战中的高频避坑指南" class="headerlink" title="五、 血泪总结：实战中的高频避坑指南"></a>五、 血泪总结：实战中的高频避坑指南</h2><p>在打通这整条自动化链路的过程中，我踩过了几个极具代表性的坑，这里全盘托出，帮后人避雷：</p>
+<h3 id="坑一：Docker-TTY-限制导致的“秒挂假成功”"><a href="#坑一：Docker-TTY-限制导致的“秒挂假成功”" class="headerlink" title="坑一：Docker TTY 限制导致的“秒挂假成功”"></a>坑一：Docker TTY 限制导致的“秒挂假成功”</h3><ul>
+<li><strong>现象</strong>：将编译脚本接入 Jenkins 并行执行时，任务 0.1 秒就结束并亮起绿灯提示成功，但去目录一看根本没生成包。</li>
+<li><strong>原因</strong>：脚本里写了 <code>docker run -it</code>。后台自动化执行时没有分配真实的物理终端（TTY），Docker 一看没终端直接崩溃。又因为脚本里写了管道符 <code>| tee log</code>，管道吞掉了 Docker 崩溃的错误码，导致外层判定成功。</li>
+<li><strong>解法</strong>：后台自动化跑 Docker <strong>绝对不能带 <code>-it</code> 参数</strong>，直接用 <code>docker run --rm</code>；并且在执行脚本开头加上 <code>set -o pipefail</code>，确保管道中任何一步报错都能直接炸出来，杜绝“假成功”。</li>
+</ul>
+<h3 id="坑二：底层-Bash-的-Bad-substitution-报错"><a href="#坑二：底层-Bash-的-Bad-substitution-报错" class="headerlink" title="坑二：底层 Bash 的 Bad substitution 报错"></a>坑二：底层 Bash 的 <code>Bad substitution</code> 报错</h3><ul>
+<li><strong>现象</strong>：Jenkins 执行 <code>sh &quot;&quot;&quot; ... &quot;&quot;&quot;</code> 代码块时，明明 Bash 语法没问题，却报 <code>Bad substitution</code> 错误。</li>
+<li><strong>原因</strong>：Jenkins 的 <code>sh</code> 步骤默认调用的是目标系统极其简陋的 <code>/bin/sh</code>（通常是指向 dash 的软链接），它根本不支持 <code>$&#123;数组[@]&#125;</code> 等高级字符串替换语法。</li>
+<li><strong>解法</strong>：在 <code>sh &quot;&quot;&quot;</code> 代码块内的第一行，紧贴着写上 <code>#!/bin/bash</code> 作为文件头，强制 Jenkins 使用功能完整的 Bash 解释器。</li>
+</ul>
+<h3 id="坑三：著名的“Root-幽灵”-文件权限冲突"><a href="#坑三：著名的“Root-幽灵”-文件权限冲突" class="headerlink" title="坑三：著名的“Root 幽灵” (文件权限冲突)"></a>坑三：著名的“Root 幽灵” (文件权限冲突)</h3><ul>
+<li><strong>现象</strong>：Jenkins 跑着跑着，在执行 <code>chmod</code> 或者清理旧文件时，爆出红色的 <code>不允许的操作 (Operation not permitted)</code>。</li>
+<li><strong>原因</strong>：前期手动测试时你可能用了 <code>root</code> 账号去 <code>svn checkout</code>，或者 Docker 容器内部（默认是 root 身份）编译产生的文件落盘到了挂载的宿主机目录。这导致文件归属权全变成了 root。等正式跑的时候，Jenkins 以普通用户（<code>zhongfu</code>）身份进来，想改 root 老大的东西直接被系统保安拦死。</li>
+<li><strong>解法</strong>：如果权限乱了，最彻底的解决办法是用 <code>root</code> 账号在宿主机终端执行一波终极大法：<code>chown -R zhongfu:zhongfu /data/你的工作目录</code>，把文件的控制权统统抢回给 Jenkins 的运行账号。</li>
+</ul>
+<hr>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>从过去手动挨个进虚拟机敲命令，到如今只需在 Jenkins 页面上“勾选想要的系统，填入版本号，点下运行，喝口茶的功夫（需要四十分钟 哈哈哈 不过要快六倍 还不会出错），安装包就全自动吐出来了”，这种工业化流水的效率飞跃是极其震撼的。</p>
+<p>目前实现了一台机器可以打6个系统的子系统包，另一台机器打所有最终的run包，由于都是jenkins的重复使用，就没在文中赘述，希望这种思路可以帮到大家。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Docker/" rel="tag"># Docker</a>
+              <a href="/tags/Jenkins/" rel="tag"># Jenkins</a>
+              <a href="/tags/Harbor/" rel="tag"># Harbor</a>
+              <a href="/tags/CI-CD/" rel="tag"># CI/CD</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/05/cpp11-series/week12/" rel="prev" title="C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）">
+                  <i class="fa fa-angle-left"></i> C++11 进阶实战 | Week 12：综合实战结业（可观测的异步 KV Server）
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
