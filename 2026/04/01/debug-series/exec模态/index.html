@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"this-wk.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.18.1","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="从一个“台式机正常、笔记本异常”的 Qt 最小化 Bug 出发，复盘如何定位到 exec() 导致的模态窗口问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Qt 填坑记 | 同一个程序，台式机正常笔记本却无法最小化？罪魁祸首竟是 exec()！">
+<meta property="og:url" content="https://this-wk.github.io/2026/04/01/debug-series/exec%E6%A8%A1%E6%80%81/index.html">
+<meta property="og:site_name" content="wwk&#39;s blog">
+<meta property="og:description" content="从一个“台式机正常、笔记本异常”的 Qt 最小化 Bug 出发，复盘如何定位到 exec() 导致的模态窗口问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-04-01T12:30:00.000Z">
+<meta property="article:modified_time" content="2026-04-01T12:31:54.714Z">
+<meta property="article:author" content="wwk">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Qt">
+<meta property="article:tag" content="Windows">
+<meta property="article:tag" content="Bug排查">
+<meta property="article:tag" content="模态对话框">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://this-wk.github.io/2026/04/01/debug-series/exec%E6%A8%A1%E6%80%81/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://this-wk.github.io/2026/04/01/debug-series/exec%E6%A8%A1%E6%80%81/","path":"2026/04/01/debug-series/exec模态/","title":"Qt 填坑记 | 同一个程序，台式机正常笔记本却无法最小化？罪魁祸首竟是 exec()！"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Qt 填坑记 | 同一个程序，台式机正常笔记本却无法最小化？罪魁祸首竟是 exec()！ | wwk's blog</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">wwk's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-user fa-fw"></i>首页</a></li><li class="menu-item menu-item-blog"><a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>博客</a></li><li class="menu-item menu-item-专栏"><a href="/columns/" rel="section"><i class="fa fa-book fa-fw"></i>专栏</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%90%9B-%E8%AF%A1%E5%BC%82%E7%9A%84-Bug-%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.</span> <span class="nav-text">🐛 诡异的 Bug 现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%95%B5%EF%B8%8F-%E6%BA%90%E7%A0%81%E8%BF%BD%E8%B8%AA%EF%BC%9A%E6%8F%AA%E5%87%BA%E5%88%86%E6%AD%A7%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">🕵️ 源码追踪：揪出分歧点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%A0-%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%EF%BC%9Aexec-%E4%B8%8E-show-%E7%9A%84%E5%A4%A9%E5%A3%A4%E4%B9%8B%E5%88%AB"><span class="nav-number">3.</span> <span class="nav-text">🧠 根因分析：exec() 与 show() 的天壤之别</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-exec-%E5%BC%80%E5%90%AF%E7%9A%84%E6%98%AF%E2%80%9C%E6%A8%A1%E6%80%81%E5%AF%B9%E8%AF%9D%E6%A1%86%EF%BC%88Modal%EF%BC%89%E2%80%9D"><span class="nav-number">3.1.</span> <span class="nav-text">1. exec() 开启的是“模态对话框（Modal）”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-show-%E5%BC%80%E5%90%AF%E7%9A%84%E6%98%AF%E2%80%9C%E9%9D%9E%E6%A8%A1%E6%80%81%E7%AA%97%E5%8F%A3%EF%BC%88Modeless%EF%BC%89%E2%80%9D"><span class="nav-number">3.2.</span> <span class="nav-text">2. show() 开启的是“非模态窗口（Modeless）”</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%BB-%E8%A7%A3%E5%BC%80%E8%B0%9C%E5%9B%A2%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%B0%E5%BC%8F%E6%9C%BA%E8%83%BD%E8%A1%8C%EF%BC%8C%E7%AC%94%E8%AE%B0%E6%9C%AC%E4%B8%8D%E8%A1%8C%EF%BC%9F"><span class="nav-number">4.</span> <span class="nav-text">💻 解开谜团：为什么台式机能行，笔记本不行？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%9B%A0%EF%B8%8F-%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">5.</span> <span class="nav-text">🛠️ 解决方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%A1-%E6%80%BB%E7%BB%93%E4%B8%8E%E5%8F%8D%E6%80%9D"><span class="nav-number">6.</span> <span class="nav-text">💡 总结与反思</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%93%9A-%E4%B8%93%E6%A0%8F%E5%85%A5%E5%8F%A3"><span class="nav-number">7.</span> <span class="nav-text">📚 专栏入口</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="wwk"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">wwk</p>
+  <div class="site-description" itemprop="description">wwk的技术博客</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/blog/">
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/this-wk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;this-wk" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://this-wk.github.io/2026/04/01/debug-series/exec%E6%A8%A1%E6%80%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="wwk">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="wwk's blog">
+      <meta itemprop="description" content="wwk的技术博客">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Qt 填坑记 | 同一个程序，台式机正常笔记本却无法最小化？罪魁祸首竟是 exec()！ | wwk's blog">
+      <meta itemprop="description" content="从一个“台式机正常、笔记本异常”的 Qt 最小化 Bug 出发，复盘如何定位到 exec() 导致的模态窗口问题。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Qt 填坑记 | 同一个程序，台式机正常笔记本却无法最小化？罪魁祸首竟是 exec()！
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-01 20:30:00" itemprop="dateCreated datePublished" datetime="2026-04-01T20:30:00+08:00">2026-04-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Bug%E8%B0%83%E8%AF%95%E5%AE%9E%E5%BD%95/" itemprop="url" rel="index"><span itemprop="name">Bug调试实录</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+            <div class="post-description">从一个“台式机正常、笔记本异常”的 Qt 最小化 Bug 出发，复盘如何定位到 exec() 导致的模态窗口问题。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="🐛-诡异的-Bug-现象"><a href="#🐛-诡异的-Bug-现象" class="headerlink" title="🐛 诡异的 Bug 现象"></a>🐛 诡异的 Bug 现象</h2><p>最近在开发一个 C++ Qt 程序时，遇到了一个极其“玄学”的 Bug： 程序打包后，<strong>同样的安装包，在我的台式机上运行一切正常，但在笔记本上运行时，点击窗口的“最小化”按钮竟然毫无反应！</strong></p>
+<p>更诡异的是，这个程序分为“单机版”和“网络版”。经过测试发现：</p>
+<ul>
+<li><strong>单机版</strong>：在笔记本和台式机上最小化功能都正常。</li>
+<li><strong>网络版</strong>：在台式机上正常，在笔记本上最小化失效。</li>
+</ul>
+<p>起初我一直以为是笔记本的显卡驱动、高 DPI 缩放或者是某些后台软件拦截了窗口消息，排查了一大圈毫无头绪。直到我重新审视了单机版和网络版的代码执行路径，才发现了真正的“幕后黑手”。</p>
+<h2 id="🕵️-源码追踪：揪出分歧点"><a href="#🕵️-源码追踪：揪出分歧点" class="headerlink" title="🕵️ 源码追踪：揪出分歧点"></a>🕵️ 源码追踪：揪出分歧点</h2><p>虽然单机版和网络版的最小化按钮绑定的槽函数（<code>showMinimized()</code>）是完全一样的，但它们在初始化窗口时的执行分支却不同。</p>
+<p>关键代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ClientDialog::initWindow</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">refreshShow</span>();</span><br><span class="line">    <span class="comment">// 如果当前是网络版</span></span><br><span class="line">    <span class="keyword">if</span>(cur_clienttype == NetType) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// ... 其他网络版专属初始化逻辑 ...</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">this</span>-&gt;<span class="built_in">exec</span>();  <span class="comment">// &lt;--- 罪魁祸首在这里！</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 单机版走这里的初始化逻辑</span></span><br><span class="line">    <span class="built_in">slot_initWindow</span>(); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过对比发现，<strong>网络版的主窗口被当成了 <code>exec()</code> 来运行，而单机版则是普通的 <code>show()</code>。</strong> 这就导致了“虽然最小化代码一样，但被最小化的窗口在底层根本不是同一种身份”的问题。</p>
+<h2 id="🧠-根因分析：exec-与-show-的天壤之别"><a href="#🧠-根因分析：exec-与-show-的天壤之别" class="headerlink" title="🧠 根因分析：exec() 与 show() 的天壤之别"></a>🧠 根因分析：exec() 与 show() 的天壤之别</h2><p>对于 Qt 的 <code>QDialog</code> 来说，<code>exec()</code> 和 <code>show()</code> 在底层的表现差异巨大：</p>
+<h3 id="1-exec-开启的是“模态对话框（Modal）”"><a href="#1-exec-开启的是“模态对话框（Modal）”" class="headerlink" title="1. exec() 开启的是“模态对话框（Modal）”"></a>1. <code>exec()</code> 开启的是“模态对话框（Modal）”</h3><p>当你调用 <code>this-&gt;exec()</code> 时，程序会进入一个局部的事件循环，并阻塞掉其他窗口的交互。</p>
+<ul>
+<li><strong>操作系统的视角</strong>：Windows 的窗口管理器（DWM）会认为这是一个“必须马上处理且阻塞其他操作”的模态窗口（比如常见的“是否确认删除？”弹窗）。为了防止用户把它最小化后找不到，导致整个软件“假死”，<strong>Windows 底层会严格限制甚至直接忽略模态对话框的“最小化”请求。</strong></li>
+<li><strong>结果</strong>：即使代码里写了 <code>showMinimized()</code>，操作系统也会把它拦截下来。</li>
+</ul>
+<h3 id="2-show-开启的是“非模态窗口（Modeless）”"><a href="#2-show-开启的是“非模态窗口（Modeless）”" class="headerlink" title="2. show() 开启的是“非模态窗口（Modeless）”"></a>2. <code>show()</code> 开启的是“非模态窗口（Modeless）”</h3><p>调用 <code>show()</code> 显示的是普通的顶层窗口，代码执行后会立刻返回，不会阻塞主事件循环。</p>
+<ul>
+<li><strong>操作系统的视角</strong>：这就是一个普通的程序主窗口（类似于浏览器、QQ界面）。Windows 会赋予它完整的最大化、最小化权限。</li>
+</ul>
+<h2 id="💻-解开谜团：为什么台式机能行，笔记本不行？"><a href="#💻-解开谜团：为什么台式机能行，笔记本不行？" class="headerlink" title="💻 解开谜团：为什么台式机能行，笔记本不行？"></a>💻 解开谜团：为什么台式机能行，笔记本不行？</h2><p>既然 <code>exec()</code> 的模态窗口不让最小化，那为什么网络版在我的台式机上又是正常的呢？</p>
+<p>这其实是因为 <strong>Qt 对“无边框模态对话框”的状态计算，高度依赖具体的操作系统环境</strong>。</p>
+<ol>
+<li><strong>系统环境差异</strong>：不同的 Windows 版本、不同的系统补丁，对模态窗口的权限管理严格程度不同。</li>
+<li><strong>显示设置差异</strong>：与机器上的显示环境也有很大关系。</li>
+</ol>
+<h2 id="🛠️-解决方案"><a href="#🛠️-解决方案" class="headerlink" title="🛠️ 解决方案"></a>🛠️ 解决方案</h2><p><strong>把 <code>this-&gt;exec()</code> 注释掉或改成 <code>.show()</code> 即可。</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 修复后的代码片段</span></span><br><span class="line"><span class="keyword">if</span>(cur_clienttype == NetType) </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ... 其他逻辑 ...</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// this-&gt;exec(); // 删掉或注释掉这行不合理的模态调用</span></span><br><span class="line">    <span class="keyword">this</span>-&gt;<span class="built_in">show</span>();    <span class="comment">// 改为普通的非模态显示（如果外层没有统一调 show 的话）</span></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="💡-总结与反思"><a href="#💡-总结与反思" class="headerlink" title="💡 总结与反思"></a>💡 总结与反思</h2><ol>
+<li><strong>主界面千万别用 <code>exec()</code></strong>：<code>exec()</code> 应该专属于那些需要用户强制交互的临时弹窗（如警告框、密码输入框）。程序的主界面的展示，标准做法就是使用 <code>.show()</code>。</li>
+<li><strong>源码看着一样，执行路径不同</strong>：排查环境相关 Bug 时，如果发现同一套代码表现不一，除了排查外部环境，一定要检查对象在内存中被创建或调用时的<strong>状态和身份</strong>是否一致。</li>
+</ol>
+<h2 id="📚-专栏入口"><a href="#📚-专栏入口" class="headerlink" title="📚 专栏入口"></a>📚 专栏入口</h2><ul>
+<li><a href="/columns/debug/">Bug 调试实录专栏</a></li>
+<li><a href="/categories/Bug%E8%B0%83%E8%AF%95%E5%AE%9E%E5%BD%95/">Bug 调试实录分类归档</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C++</a>
+              <a href="/tags/Qt/" rel="tag"># Qt</a>
+              <a href="/tags/Windows/" rel="tag"># Windows</a>
+              <a href="/tags/Bug%E6%8E%92%E6%9F%A5/" rel="tag"># Bug排查</a>
+              <a href="/tags/%E6%A8%A1%E6%80%81%E5%AF%B9%E8%AF%9D%E6%A1%86/" rel="tag"># 模态对话框</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/31/%E7%89%9B%E9%A9%AC%E7%9A%84%E6%8C%A3%E6%89%8E%E4%B9%8B%E6%89%93%E5%8C%85%E7%AF%87/" rel="prev" title="一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录">
+                  <i class="fa fa-angle-left"></i> 一套搞定！基于 Docker + Jenkins + Harbor 的国产多系统自动化编译流水线实战全纪录
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">wwk</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
